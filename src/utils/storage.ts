@@ -1,0 +1,614 @@
+import { Product, Order, Voucher, CartItem, OrderStatus, TrackingCheckpoint, DEFAULT_CATEGORIES, StoreConfig, DEFAULT_STORE_CONFIG } from '../types';
+import { INITIAL_PRODUCTS, INITIAL_ORDERS, INITIAL_VOUCHERS } from '../data/mockData';
+
+const PRODUCTS_KEY = 'khan_gadget_products_v2';
+const DELETED_PRODUCT_IDS_KEY = 'khan_gadget_deleted_products_v2';
+const ORDERS_KEY = 'khan_gadget_orders_v2';
+const DELETED_ORDER_IDS_KEY = 'khan_gadget_deleted_orders_v2';
+const HISTORICAL_SALES_KEY = 'khan_gadget_historical_sales_v1';
+const VOUCHERS_KEY = 'khan_gadget_vouchers_v2';
+const CART_KEY = 'khan_gadget_cart_v2';
+const WISHLIST_KEY = 'khan_gadget_wishlist_v2';
+const RECENTLY_VIEWED_KEY = 'khan_gadget_recently_viewed_v1';
+const CATEGORIES_KEY = 'khan_gadget_categories_v2';
+const DELETED_CATEGORIES_KEY = 'khan_gadget_deleted_categories_v2';
+const STORE_CONFIG_KEY = 'khan_gadget_store_config_v2';
+const VISITOR_COUNT_KEY = 'khan_gadget_visitor_count_v1';
+const VISITOR_ID_KEY = 'khan_gadget_visitor_id_v1';
+
+export const BASE_VISITOR_COUNT = 8734;
+
+export const formatPhoneForWhatsApp = (rawPhone?: string): string => {
+  const digits = (rawPhone || '01854774406').replace(/[^0-9]/g, '');
+  if (digits.startsWith('88')) return digits;
+  if (digits.startsWith('0')) return '88' + digits;
+  return '880' + digits;
+};
+
+export const getStoreWhatsAppNumber = (): string => {
+  return formatPhoneForWhatsApp(getStoredStoreConfig().phone);
+};
+
+export const STORE_WHATSAPP_NUMBER = '8801854774406';
+
+export const getCourierTrackingUrl = (carrier: string = '', trackingNo: string = ''): string => {
+  const code = encodeURIComponent(trackingNo.trim());
+  const c = carrier.toLowerCase();
+  if (c.includes('steadfast') || trackingNo.toUpperCase().startsWith('STD-') || trackingNo.toUpperCase().startsWith('STEAD-')) {
+    return `https://steadfast.com.bd/t/${code}`;
+  }
+  if (c.includes('pathao')) {
+    return `https://merchant.pathao.com/tracking?consignment_id=${code}`;
+  }
+  if (c.includes('redx')) {
+    return `https://redx.com.bd/track?trackingId=${code}`;
+  }
+  if (c.includes('paperfly')) {
+    return `https://paperfly.com.bd/tracking.php?code=${code}`;
+  }
+  if (c.includes('sundarban')) {
+    return `https://sundarbancourierltd.com/`;
+  }
+  if (c.includes('ecourier')) {
+    return `https://ecourier.com.bd/tracking?id=${code}`;
+  }
+  return `https://steadfast.com.bd/t/${code}`;
+};
+
+export const getRecentlyViewedIds = (): string[] => {
+  try {
+    const data = localStorage.getItem(RECENTLY_VIEWED_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const addRecentlyViewedId = (productId: string): string[] => {
+  try {
+    const current = getRecentlyViewedIds().filter(id => id !== productId);
+    const updated = [productId, ...current].slice(0, 10);
+    localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(updated));
+    return updated;
+  } catch {
+    return [];
+  }
+};
+
+export const generateWhatsAppOrderUrl = (
+  product: Product, 
+  quantity: number = 1, 
+  variants?: Record<string, string>
+): string => {
+  const config = getStoredStoreConfig();
+  const phone = formatPhoneForWhatsApp(config.phone);
+  let message = `*নতুন অর্ডার রিকোয়েস্ট (${config.storeName})*\n\n`;
+  message += `📦 *পণ্য:* ${product.title}\n`;
+  message += `💰 *মূল্য:* ৳ ${product.price.toLocaleString('en-BD')} (পরিমাণ: ${quantity})\n`;
+  message += `🏷️ *ব্র্যান্ড:* ${product.brand} | *ক্যাটেগরি:* ${product.category}\n`;
+  
+  if (variants && Object.keys(variants).length > 0) {
+    const variantStr = Object.entries(variants).map(([k, v]) => `${k}: ${v}`).join(', ');
+    message += `🎨 *ভেরিয়েন্ট:* ${variantStr}\n`;
+  }
+  
+  message += `\nআমি এই পণ্যটি ক্যাশ অন ডেলিভারিতে অর্ডার করতে চাই। দয়া করে বিস্তারিত জানিয়ে কনফার্ম করুন।`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+};
+
+export const generateWhatsAppCartOrderUrl = (
+  items: { title: string; price: number; quantity: number; variants?: Record<string, string> }[],
+  total: number,
+  customerName?: string,
+  phone?: string,
+  address?: string
+): string => {
+  const config = getStoredStoreConfig();
+  const targetPhone = formatPhoneForWhatsApp(config.phone);
+  let message = `*নতুন কার্ট অর্ডার (${config.storeName})*\n\n`;
+  if (customerName) message += `👤 *কাস্টমার:* ${customerName}\n`;
+  if (phone) message += `📞 *ফোন:* ${phone}\n`;
+  if (address) message += `📍 *ঠিকানা:* ${address}\n\n`;
+  
+  message += `🛍️ *অর্ডার আইটেম সমূহ:*\n`;
+  items.forEach((it, idx) => {
+    message += `${idx + 1}. ${it.title} (Qty: ${it.quantity}) - ৳ ${(it.price * it.quantity).toLocaleString('en-BD')}\n`;
+  });
+  
+  message += `\n💵 *মোট প্রদেয়:* ৳ ${total.toLocaleString('en-BD')} (Cash on Delivery)\n`;
+  message += `\nদয়া করে আমার অর্ডারটি কনফার্ম করুন। ধন্যবাদ!`;
+  return `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
+};
+
+export const getDeletedProductIds = (): string[] => {
+  try {
+    const data = localStorage.getItem(DELETED_PRODUCT_IDS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const mergeDeletedProductIds = (remoteIds: string[]): string[] => {
+  try {
+    const local = getDeletedProductIds();
+    const merged = Array.from(new Set([...local, ...remoteIds]));
+    localStorage.setItem(DELETED_PRODUCT_IDS_KEY, JSON.stringify(merged));
+    return merged;
+  } catch {
+    return [];
+  }
+};
+
+export const deleteStoredProduct = (productId: string): Product[] => {
+  try {
+    const deletedIds = getDeletedProductIds();
+    if (!deletedIds.includes(productId)) {
+      deletedIds.push(productId);
+      localStorage.setItem(DELETED_PRODUCT_IDS_KEY, JSON.stringify(deletedIds));
+    }
+    const current = getStoredProducts();
+    const filtered = current.filter(p => p.id !== productId);
+    saveStoredProducts(filtered);
+    return filtered;
+  } catch (e) {
+    console.error('Failed to delete stored product', e);
+    return [];
+  }
+};
+
+export const getStoredProducts = (): Product[] => {
+  try {
+    const deletedIds = getDeletedProductIds();
+    const data = localStorage.getItem(PRODUCTS_KEY);
+    if (!data) {
+      const initial = INITIAL_PRODUCTS.filter(p => !deletedIds.includes(p.id));
+      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(initial));
+      return initial;
+    }
+    const parsed: Product[] = JSON.parse(data);
+    if (!Array.isArray(parsed)) return INITIAL_PRODUCTS.filter(p => !deletedIds.includes(p.id));
+    // Filter out any deleted products; DO NOT automatically re-inject deleted products
+    const filtered = parsed.filter(p => !deletedIds.includes(p.id));
+    return filtered;
+  } catch (e) {
+    console.error('Failed to get stored products', e);
+    const deletedIds = getDeletedProductIds();
+    return INITIAL_PRODUCTS.filter(p => !deletedIds.includes(p.id));
+  }
+};
+
+export const saveStoredProducts = (products: Product[]): void => {
+  try {
+    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+  } catch (e) {
+    console.error('Failed to save products', e);
+  }
+};
+
+export interface HistoricalSalesData {
+  historicalDeliveredSales: number;
+  historicalDeliveredCount: number;
+}
+
+export const getHistoricalDeliveredSales = (): HistoricalSalesData => {
+  try {
+    const data = localStorage.getItem(HISTORICAL_SALES_KEY);
+    if (!data) return { historicalDeliveredSales: 0, historicalDeliveredCount: 0 };
+    return JSON.parse(data);
+  } catch {
+    return { historicalDeliveredSales: 0, historicalDeliveredCount: 0 };
+  }
+};
+
+export const saveHistoricalDeliveredSales = (amount: number, count: number = 1): HistoricalSalesData => {
+  try {
+    const current = getHistoricalDeliveredSales();
+    const updated: HistoricalSalesData = {
+      historicalDeliveredSales: Math.max(0, (current.historicalDeliveredSales || 0) + amount),
+      historicalDeliveredCount: Math.max(0, (current.historicalDeliveredCount || 0) + count)
+    };
+    localStorage.setItem(HISTORICAL_SALES_KEY, JSON.stringify(updated));
+    return updated;
+  } catch (e) {
+    console.error('Failed to save historical sales', e);
+    return { historicalDeliveredSales: 0, historicalDeliveredCount: 0 };
+  }
+};
+
+export const setHistoricalDeliveredSalesExact = (sales: number, count: number): void => {
+  try {
+    localStorage.setItem(HISTORICAL_SALES_KEY, JSON.stringify({
+      historicalDeliveredSales: Math.max(0, sales),
+      historicalDeliveredCount: Math.max(0, count)
+    }));
+  } catch (e) {
+    console.error('Failed to set historical sales', e);
+  }
+};
+
+export const getDeletedOrderIds = (): string[] => {
+  try {
+    const data = localStorage.getItem(DELETED_ORDER_IDS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const mergeDeletedOrderIds = (remoteIds: string[]): string[] => {
+  try {
+    const local = getDeletedOrderIds();
+    const merged = Array.from(new Set([...local, ...remoteIds]));
+    localStorage.setItem(DELETED_ORDER_IDS_KEY, JSON.stringify(merged));
+    return merged;
+  } catch {
+    return [];
+  }
+};
+
+export const getStoredOrders = (): Order[] => {
+  try {
+    const data = localStorage.getItem(ORDERS_KEY);
+    const deletedIds = getDeletedOrderIds();
+    if (!data) {
+      const filteredInitial = INITIAL_ORDERS.filter(o => !deletedIds.includes(o.id));
+      localStorage.setItem(ORDERS_KEY, JSON.stringify(filteredInitial));
+      return filteredInitial;
+    }
+    const parsed: Order[] = JSON.parse(data);
+    return parsed.filter(o => !deletedIds.includes(o.id));
+  } catch (e) {
+    console.error('Failed to get stored orders', e);
+    return INITIAL_ORDERS;
+  }
+};
+
+export const saveStoredOrders = (orders: Order[]): void => {
+  try {
+    const deletedIds = getDeletedOrderIds();
+    const filtered = orders.filter(o => !deletedIds.includes(o.id));
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(filtered));
+  } catch (e) {
+    console.error('Failed to save orders', e);
+  }
+};
+
+export const deleteStoredOrder = (orderId: string): { orders: Order[]; preservedAmount: number; wasDelivered: boolean } => {
+  try {
+    const deletedIds = getDeletedOrderIds();
+    if (!deletedIds.includes(orderId)) {
+      deletedIds.push(orderId);
+      localStorage.setItem(DELETED_ORDER_IDS_KEY, JSON.stringify(deletedIds));
+    }
+
+    const currentOrders = getStoredOrders();
+    const targetOrder = currentOrders.find(o => o.id === orderId);
+    let preservedAmount = 0;
+    let wasDelivered = false;
+
+    if (targetOrder && targetOrder.status === 'Delivered') {
+      preservedAmount = targetOrder.total;
+      wasDelivered = true;
+      // Permanently archive this delivered sales amount so total sales never drops!
+      saveHistoricalDeliveredSales(targetOrder.total, 1);
+    }
+
+    const filtered = currentOrders.filter(o => o.id !== orderId);
+    saveStoredOrders(filtered);
+    return { orders: filtered, preservedAmount, wasDelivered };
+  } catch (e) {
+    console.error('Failed to delete stored order', e);
+    return { orders: getStoredOrders(), preservedAmount: 0, wasDelivered: false };
+  }
+};
+
+export const calculateTotalDeliveredSales = (orders: Order[], analytics?: { historicalDeliveredSales?: number; historicalDeliveredCount?: number }): { totalSales: number; totalCount: number } => {
+  const deliveredInOrders = orders.filter(o => o.status === 'Delivered');
+  const activeDeliveredSales = deliveredInOrders.reduce((sum, o) => sum + o.total, 0);
+  const activeDeliveredCount = deliveredInOrders.length;
+
+  const localHistorical = getHistoricalDeliveredSales();
+  const remoteHistoricalSales = Number(analytics?.historicalDeliveredSales) || 0;
+  const remoteHistoricalCount = Number(analytics?.historicalDeliveredCount) || 0;
+
+  const historicalSales = Math.max(localHistorical.historicalDeliveredSales || 0, remoteHistoricalSales);
+  const historicalCount = Math.max(localHistorical.historicalDeliveredCount || 0, remoteHistoricalCount);
+
+  return {
+    totalSales: activeDeliveredSales + historicalSales,
+    totalCount: activeDeliveredCount + historicalCount
+  };
+};
+
+export const addStoredOrder = (newOrder: Order): void => {
+  const currentOrders = getStoredOrders();
+  const updated = [newOrder, ...currentOrders];
+  saveStoredOrders(updated);
+
+  // Decrement stock for ordered products
+  const products = getStoredProducts();
+  newOrder.items.forEach(item => {
+    const target = products.find(p => p.id === item.product.id);
+    if (target) {
+      target.stock = Math.max(0, target.stock - item.quantity);
+    }
+  });
+  saveStoredProducts(products);
+};
+
+export const updateOrderStatus = (orderId: string, status: OrderStatus, carrier?: string, note?: string): Order | null => {
+  const orders = getStoredOrders();
+  const orderIndex = orders.findIndex(o => o.id === orderId);
+  if (orderIndex === -1) return null;
+
+  const order = { ...orders[orderIndex] };
+  order.status = status;
+  if (carrier) order.carrierName = carrier;
+
+  // Add new tracking checkpoint automatically
+  const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ', ' + new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  
+  // Mark prior checkpoints completed
+  const currentCheckpoints: TrackingCheckpoint[] = order.checkpoints.map(cp => ({
+    ...cp,
+    completed: true,
+    current: false
+  }));
+
+  const newCheckpoint: TrackingCheckpoint = {
+    title: `Status Updated to ${status}`,
+    location: carrier ? `${carrier} Operations Hub` : 'KHAN GADGET Operations Center',
+    time: timeStr,
+    description: note || `Order updated to ${status}. Details logged in dispatch system.`,
+    completed: true,
+    current: true
+  };
+
+  order.checkpoints = [...currentCheckpoints, newCheckpoint];
+  orders[orderIndex] = order;
+  saveStoredOrders(orders);
+  return order;
+};
+
+export const getStoredVouchers = (): Voucher[] => {
+  try {
+    const data = localStorage.getItem(VOUCHERS_KEY);
+    if (!data) {
+      localStorage.setItem(VOUCHERS_KEY, JSON.stringify(INITIAL_VOUCHERS));
+      return INITIAL_VOUCHERS;
+    }
+    return JSON.parse(data);
+  } catch (e) {
+    console.error('Failed to get vouchers', e);
+    return INITIAL_VOUCHERS;
+  }
+};
+
+export const saveStoredVouchers = (vouchers: Voucher[]): void => {
+  try {
+    localStorage.setItem(VOUCHERS_KEY, JSON.stringify(vouchers));
+  } catch (e) {
+    console.error('Failed to save vouchers', e);
+  }
+};
+
+export const getStoredCart = (): CartItem[] => {
+  try {
+    const data = localStorage.getItem(CART_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+export const saveStoredCart = (cart: CartItem[]): void => {
+  try {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  } catch (e) {
+    console.error('Failed to save cart', e);
+  }
+};
+
+export const getStoredWishlist = (): string[] => {
+  try {
+    const data = localStorage.getItem(WISHLIST_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+export const saveStoredWishlist = (wishlist: string[]): void => {
+  try {
+    localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlist));
+  } catch (e) {
+    console.error('Failed to save wishlist', e);
+  }
+};
+
+export const formatPrice = (amount: number): string => {
+  return '৳ ' + (amount || 0).toLocaleString('en-BD');
+};
+
+// Categories Persistence & Deletion Tracking
+export const getDeletedCategoryNames = (): string[] => {
+  try {
+    const data = localStorage.getItem(DELETED_CATEGORIES_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const markCategoryDeleted = (catName: string): void => {
+  try {
+    const trimmed = catName.trim().toLowerCase();
+    if (!trimmed) return;
+    const current = getDeletedCategoryNames();
+    if (!current.some(c => c.toLowerCase() === trimmed)) {
+      current.push(trimmed);
+      localStorage.setItem(DELETED_CATEGORIES_KEY, JSON.stringify(current));
+    }
+  } catch (e) {
+    console.error('Failed to mark category as deleted:', e);
+  }
+};
+
+export const unmarkCategoryDeleted = (catName: string): void => {
+  try {
+    const trimmed = catName.trim().toLowerCase();
+    if (!trimmed) return;
+    const current = getDeletedCategoryNames();
+    const filtered = current.filter(c => c.toLowerCase() !== trimmed);
+    localStorage.setItem(DELETED_CATEGORIES_KEY, JSON.stringify(filtered));
+  } catch (e) {
+    console.error('Failed to unmark category as deleted:', e);
+  }
+};
+
+export const getStoredCategories = (): string[] => {
+  try {
+    const deleted = getDeletedCategoryNames();
+    const data = localStorage.getItem(CATEGORIES_KEY);
+    if (data) {
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Merge any new default categories
+        const combined = Array.from(new Set([...DEFAULT_CATEGORIES, ...parsed]));
+        return combined.filter(c => typeof c === 'string' && !deleted.some(d => d.toLowerCase() === c.trim().toLowerCase()));
+      }
+    }
+    return DEFAULT_CATEGORIES.filter(c => !deleted.some(d => d.toLowerCase() === c.trim().toLowerCase()));
+  } catch (err) {
+    console.error('Error reading categories from storage:', err);
+  }
+  return [...DEFAULT_CATEGORIES];
+};
+
+export const saveStoredCategories = (categories: string[]): void => {
+  try {
+    const deleted = getDeletedCategoryNames();
+    const sanitized = Array.from(
+      new Set(
+        categories
+          .map(c => (typeof c === 'string' ? c.trim() : ''))
+          .filter(c => Boolean(c) && !deleted.some(d => d.toLowerCase() === c.toLowerCase()))
+      )
+    );
+    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(sanitized));
+  } catch (err) {
+    console.error('Error saving categories to storage:', err);
+  }
+};
+
+export const addStoredCategory = (categoryName: string): string[] => {
+  const trimmed = categoryName.trim();
+  if (!trimmed) return getStoredCategories();
+  unmarkCategoryDeleted(trimmed);
+  const current = getStoredCategories();
+  if (!current.some(c => c.toLowerCase() === trimmed.toLowerCase())) {
+    const updated = [...current, trimmed];
+    saveStoredCategories(updated);
+    return updated;
+  }
+  return current;
+};
+
+export const removeStoredCategory = (categoryName: string): string[] => {
+  const trimmed = categoryName.trim();
+  if (!trimmed) return getStoredCategories();
+  markCategoryDeleted(trimmed);
+  const current = getStoredCategories();
+  const updated = current.filter(c => c.toLowerCase() !== trimmed.toLowerCase());
+  saveStoredCategories(updated);
+  return updated;
+};
+
+export const renameStoredCategory = (oldName: string, newName: string): string[] => {
+  const current = getStoredCategories();
+  const trimmedOld = oldName.trim();
+  const trimmedNew = newName.trim();
+  if (!trimmedNew) return current;
+  unmarkCategoryDeleted(trimmedNew);
+  markCategoryDeleted(trimmedOld);
+  const updated = current.map(c => c.toLowerCase() === trimmedOld.toLowerCase() ? trimmedNew : c);
+  saveStoredCategories(updated);
+  return updated;
+};
+
+// Store Controls & Configuration Persistence
+export const getStoredStoreConfig = (): StoreConfig => {
+  try {
+    const data = localStorage.getItem(STORE_CONFIG_KEY);
+    if (data) {
+      const parsed = JSON.parse(data);
+      return { ...DEFAULT_STORE_CONFIG, ...parsed };
+    }
+  } catch (err) {
+    console.error('Error reading store config from storage:', err);
+  }
+  return DEFAULT_STORE_CONFIG;
+};
+
+export const saveStoredStoreConfig = (config: Partial<StoreConfig>): StoreConfig => {
+  try {
+    const current = getStoredStoreConfig();
+    const updated: StoreConfig = {
+      ...current,
+      ...config,
+      updatedAt: new Date().toISOString()
+    };
+    localStorage.setItem(STORE_CONFIG_KEY, JSON.stringify(updated));
+    return updated;
+  } catch (err) {
+    console.error('Error saving store config to storage:', err);
+    return DEFAULT_STORE_CONFIG;
+  }
+};
+
+// Website Visitors Persistence
+export const getStoredVisitorCount = (): number => {
+  try {
+    const val = localStorage.getItem(VISITOR_COUNT_KEY);
+    const parsed = val ? parseInt(val, 10) : 0;
+    return Math.max(BASE_VISITOR_COUNT, parsed || BASE_VISITOR_COUNT);
+  } catch {
+    return BASE_VISITOR_COUNT;
+  }
+};
+
+export const saveStoredVisitorCount = (count: number): void => {
+  try {
+    localStorage.setItem(VISITOR_COUNT_KEY, Math.max(0, count).toString());
+  } catch (err) {
+    console.error('Error saving visitor count:', err);
+  }
+};
+
+export const getOrSetVisitorId = (): { id: string; isNew: boolean } => {
+  try {
+    let id = localStorage.getItem(VISITOR_ID_KEY);
+    if (!id) {
+      id = 'vis_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
+      localStorage.setItem(VISITOR_ID_KEY, id);
+      return { id, isNew: true };
+    }
+    return { id, isNew: false };
+  } catch {
+    return { id: 'vis_' + Date.now(), isNew: false };
+  }
+};
+
+export const resetToDemoDefaults = () => {
+  localStorage.setItem(PRODUCTS_KEY, JSON.stringify(INITIAL_PRODUCTS));
+  localStorage.removeItem(DELETED_PRODUCT_IDS_KEY);
+  localStorage.setItem(ORDERS_KEY, JSON.stringify(INITIAL_ORDERS));
+  localStorage.removeItem(DELETED_ORDER_IDS_KEY);
+  localStorage.removeItem(HISTORICAL_SALES_KEY);
+  localStorage.setItem(VOUCHERS_KEY, JSON.stringify(INITIAL_VOUCHERS));
+  localStorage.removeItem(CART_KEY);
+  localStorage.removeItem(WISHLIST_KEY);
+  localStorage.removeItem(CATEGORIES_KEY);
+  window.location.reload();
+};

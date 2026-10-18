@@ -1,0 +1,144 @@
+import React, { useState, useEffect } from 'react';
+import { History, Eye, ShoppingCart, Heart, ArrowRight, Trash2, Zap } from 'lucide-react';
+import { Product } from '../types';
+import { getRecentlyViewedIds, formatPrice } from '../utils/storage';
+
+interface RecentlyViewedProps {
+  allProducts: Product[];
+  wishlist: string[];
+  onSelectProduct: (product: Product) => void;
+  onAddToCart: (product: Product, e: React.MouseEvent) => void;
+  onQuickBuy?: (product: Product) => void;
+  onToggleWishlist: (productId: string, e: React.MouseEvent) => void;
+}
+
+export const RecentlyViewed: React.FC<RecentlyViewedProps> = ({
+  allProducts,
+  wishlist,
+  onSelectProduct,
+  onAddToCart,
+  onQuickBuy,
+  onToggleWishlist
+}) => {
+  const [viewedProducts, setViewedProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const ids = getRecentlyViewedIds();
+    if (ids.length > 0) {
+      const matched = ids
+        .map(id => allProducts.find(p => p.id === id))
+        .filter((p): p is Product => Boolean(p));
+      setViewedProducts(matched);
+    } else {
+      setViewedProducts([]);
+    }
+  }, [allProducts]);
+
+  const handleClear = () => {
+    localStorage.removeItem('khan_gadget_recently_viewed_v1');
+    setViewedProducts([]);
+  };
+
+  if (viewedProducts.length === 0) return null;
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-emerald-100 dark:border-slate-800 p-3 sm:p-4 shadow-xs my-3">
+      <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 flex items-center justify-center">
+            <History className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>Recently Viewed Accessories</span>
+              <span className="text-[11px] font-normal text-emerald-800 dark:text-emerald-400 hidden sm:inline">(আপনি সম্প্রতি দেখেছেন)</span>
+            </h3>
+          </div>
+          <span className="text-[10px] bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+            {viewedProducts.length} items
+          </span>
+        </div>
+
+        <button
+          onClick={handleClear}
+          className="text-[11px] text-slate-400 hover:text-rose-600 flex items-center gap-1 transition cursor-pointer"
+          title="Clear browsing history"
+        >
+          <Trash2 className="w-3 h-3" />
+          <span className="hidden sm:inline">Clear</span>
+        </button>
+      </div>
+
+      {/* Horizontal Scroller */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5">
+        {viewedProducts.map((product) => {
+          const isWish = wishlist.includes(product.id);
+          const isOutOfStock = product.stock <= 0;
+
+          return (
+            <div
+              key={product.id}
+              onClick={() => onSelectProduct(product)}
+              className="group bg-slate-50/70 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700/60 hover:border-emerald-500 p-2 transition flex flex-col justify-between cursor-pointer relative"
+            >
+              <div>
+                <div className="relative aspect-square w-full rounded-lg bg-white dark:bg-slate-900/90 p-1 mb-1.5 flex items-center justify-center overflow-hidden border border-slate-100 dark:border-slate-800">
+                  <img
+                    src={product.image}
+                    alt={product.title}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                    loading="lazy"
+                  />
+                  <button
+                    onClick={(e) => onToggleWishlist(product.id, e)}
+                    className={`absolute bottom-1 right-1 p-1 rounded-full shadow-xs transition ${
+                      isWish 
+                        ? 'bg-rose-50 text-rose-600' 
+                        : 'bg-white dark:bg-slate-800 text-slate-400 hover:text-rose-600 opacity-0 group-hover:opacity-100'
+                    }`}
+                  >
+                    <Heart className={`w-3 h-3 ${isWish ? 'fill-rose-600' : ''}`} />
+                  </button>
+                </div>
+
+                <h4 className="text-[11px] font-semibold text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition">
+                  {product.title}
+                </h4>
+              </div>
+
+              <div className="mt-2 pt-1 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between gap-1">
+                <span className="font-bold text-xs text-emerald-700 dark:text-emerald-400 font-mono truncate">
+                  {formatPrice(product.price)}
+                </span>
+                <div className="flex items-center gap-1 shrink-0">
+                  {onQuickBuy && !isOutOfStock && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onQuickBuy(product);
+                      }}
+                      className="p-1 rounded bg-emerald-700 hover:bg-emerald-800 text-white transition cursor-pointer"
+                      title="১-ক্লিক অর্ডার"
+                    >
+                      <Zap className="w-3 h-3 fill-amber-300 text-amber-300" />
+                    </button>
+                  )}
+                  <button
+                    disabled={isOutOfStock}
+                    onClick={(e) => onAddToCart(product, e)}
+                    className="p-1 rounded bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/70 transition disabled:opacity-40 cursor-pointer"
+                    title="Add to cart"
+                  >
+                    <ShoppingCart className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};

@@ -1,0 +1,1354 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Header 
+} from './components/Header';
+import { 
+  FlashSaleBanner 
+} from './components/FlashSaleBanner';
+import { 
+  ProductCard 
+} from './components/ProductCard';
+import { 
+  ProductDetailModal 
+} from './components/ProductDetailModal';
+import { 
+  CartDrawer 
+} from './components/CartDrawer';
+import { 
+  CheckoutModal 
+} from './components/CheckoutModal';
+import { 
+  QuickOrderModal 
+} from './components/QuickOrderModal';
+import { 
+  OrderTrackingModal 
+} from './components/OrderTrackingModal';
+import { 
+  AdminPanel 
+} from './components/AdminPanel';
+import { 
+  Footer 
+} from './components/Footer';
+import { 
+  RecentlyViewed 
+} from './components/RecentlyViewed';
+import { 
+  TrustBadges 
+} from './components/TrustBadges';
+import { 
+  Product, ProductCategory, DEFAULT_CATEGORIES, CartItem, Voucher, Order, OrderStatus, ProductReview, AnalyticsData,
+  StoreConfig, DEFAULT_STORE_CONFIG
+} from './types';
+import { 
+  getStoredProducts, saveStoredProducts, deleteStoredProduct,
+  getStoredOrders, saveStoredOrders, deleteStoredOrder, updateOrderStatus,
+  getStoredVouchers, saveStoredVouchers,
+  getStoredCart, saveStoredCart,
+  getStoredWishlist, saveStoredWishlist,
+  getStoredCategories, saveStoredCategories,
+  getStoredVisitorCount, saveStoredVisitorCount,
+  getStoredStoreConfig, saveStoredStoreConfig, BASE_VISITOR_COUNT,
+  formatPrice, resetToDemoDefaults, STORE_WHATSAPP_NUMBER 
+} from './utils/storage';
+import { 
+  subscribeToProducts, 
+  subscribeToOrders, 
+  subscribeToVouchers,
+  subscribeToCategories,
+  subscribeToAnalytics,
+  subscribeToStoreConfig,
+  recordWebsiteVisit,
+  fetchRemoteProducts,
+  fetchRemoteOrders,
+  fetchRemoteCategories,
+  fetchRemoteAnalytics,
+  fetchRemoteStoreConfig,
+  syncSaveProduct,
+  syncDeleteProduct,
+  syncUpdateOrderStatus,
+  syncDeleteOrder,
+  syncSaveVoucher,
+  syncDeleteVoucher,
+  syncSaveCategories,
+  syncDeleteCategory,
+  syncResetToDemoDefaults,
+  syncAllLocalToCloud,
+  syncSaveStoreConfig
+} from './lib/syncService';
+import { 
+  SlidersHorizontal, Sparkles, X, Check, Heart, 
+  ShoppingBag, ArrowUpDown, Filter, Smartphone, Zap, 
+  Layers, ShieldCheck, Truck, Clock, RefreshCw,
+  MessageCircle, Lock, ArrowRight, ChevronRight
+} from 'lucide-react';
+
+export default function App() {
+  // Products, Orders, Vouchers State
+  const [products, setProducts] = useState<Product[]>(() => getStoredProducts());
+  const [orders, setOrders] = useState<Order[]>(() => getStoredOrders());
+  const [vouchers, setVouchers] = useState<Voucher[]>(() => getStoredVouchers());
+  const [cart, setCart] = useState<CartItem[]>(() => getStoredCart());
+  const [wishlist, setWishlist] = useState<string[]>(() => getStoredWishlist());
+  const [categories, setCategories] = useState<string[]>(() => getStoredCategories());
+  const [storeConfig, setStoreConfig] = useState<StoreConfig>(() => getStoredStoreConfig());
+  const [visitorStats, setVisitorStats] = useState<AnalyticsData>(() => ({
+    totalVisits: Math.max(BASE_VISITOR_COUNT, getStoredVisitorCount() || BASE_VISITOR_COUNT),
+    uniqueVisitors: BASE_VISITOR_COUNT,
+    lastVisitAt: new Date().toISOString()
+  }));
+
+  // Synchronize document title, meta tags, and structured data with configured Store Name & SEO Settings
+  useEffect(() => {
+    const pageTitle = storeConfig?.seoTitle?.trim() 
+      ? storeConfig.seoTitle.trim() 
+      : `${storeConfig?.storeName || 'KHAN GADGET MALL'} | Bangladesh's Mobile Accessories Mall`;
+    
+    const pageDescription = storeConfig?.seoDescription?.trim()
+      ? storeConfig.seoDescription.trim()
+      : "সকল প্রিমিয়াম গ্যাজেট ও এক্সেসরিজ · প্রিমিয়াম গ্রাহক ক্লাব · লাইভ কুরিয়ার ট্র্যাকিং.";
+
+    // 1. Browser Tab / Page Title
+    document.title = pageTitle;
+
+    // 2. Meta Description
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', pageDescription);
+
+    // 3. OpenGraph Title & Description
+    let ogTitle = document.querySelector('meta[property="og:title"]');
+    if (!ogTitle) {
+      ogTitle = document.createElement('meta');
+      ogTitle.setAttribute('property', 'og:title');
+      document.head.appendChild(ogTitle);
+    }
+    ogTitle.setAttribute('content', pageTitle);
+
+    let ogDesc = document.querySelector('meta[property="og:description"]');
+    if (!ogDesc) {
+      ogDesc = document.createElement('meta');
+      ogDesc.setAttribute('property', 'og:description');
+      document.head.appendChild(ogDesc);
+    }
+    ogDesc.setAttribute('content', pageDescription);
+
+    // 4. Twitter Cards
+    let twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    if (!twitterTitle) {
+      twitterTitle = document.createElement('meta');
+      twitterTitle.setAttribute('name', 'twitter:title');
+      document.head.appendChild(twitterTitle);
+    }
+    twitterTitle.setAttribute('content', pageTitle);
+
+    let twitterDesc = document.querySelector('meta[name="twitter:description"]');
+    if (!twitterDesc) {
+      twitterDesc = document.createElement('meta');
+      twitterDesc.setAttribute('name', 'twitter:description');
+      document.head.appendChild(twitterDesc);
+    }
+    twitterDesc.setAttribute('content', pageDescription);
+
+    // 5. Schema.org JSON-LD Structured Data for search engines
+    let schemaScript = document.getElementById('store-schema-jsonld') as HTMLScriptElement | null;
+    if (!schemaScript) {
+      schemaScript = document.createElement('script');
+      schemaScript.id = 'store-schema-jsonld';
+      schemaScript.type = 'application/ld+json';
+      document.head.appendChild(schemaScript);
+    }
+    const schemaData = {
+      "@context": "https://schema.org",
+      "@type": "OnlineStore",
+      "name": storeConfig?.storeName || 'KHAN GADGET MALL',
+      "headline": pageTitle,
+      "description": pageDescription,
+      "telephone": storeConfig?.phone || '01854774406',
+      "url": typeof window !== 'undefined' ? window.location.origin : ''
+    };
+    schemaScript.textContent = JSON.stringify(schemaData);
+  }, [storeConfig?.storeName, storeConfig?.seoTitle, storeConfig?.seoDescription, storeConfig?.phone]);
+
+  // Modals visibility
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isTrackingOpen, setIsTrackingOpen] = useState(false);
+  const [activeTrackingOrderId, setActiveTrackingOrderId] = useState<string | undefined>(undefined);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+
+  // 1-Click Buy Now Modal State
+  const [quickBuyProduct, setQuickBuyProduct] = useState<Product | null>(null);
+  const [quickBuyQuantity, setQuickBuyQuantity] = useState<number>(1);
+  const [quickBuyVariants, setQuickBuyVariants] = useState<Record<string, string>>({});
+
+  // Quick Track Input
+  const [quickTrackInput, setQuickTrackInput] = useState('');
+
+  // Search & Filter State
+  const [selectedCategory, setSelectedCategory] = useState<ProductCategory>('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBrand, setSelectedBrand] = useState<string>('All');
+  const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating'>('featured');
+  const [onlyDarazMall, setOnlyDarazMall] = useState(false);
+  const [onlyFreeDelivery, setOnlyFreeDelivery] = useState(false);
+  const [onlyFlashSale, setOnlyFlashSale] = useState(false);
+
+  // Active Voucher in Cart
+  const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
+
+  // Dark / Light Mode State (Persisted in localStorage)
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('khan_gadget_dark_mode');
+      if (saved !== null) return JSON.parse(saved);
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('khan_gadget_dark_mode', JSON.stringify(isDarkMode));
+    } catch {}
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => !prev);
+  };
+
+  // Temporary Notification Toast
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((curr) => (curr === msg ? null : curr));
+    }, 2800);
+  };
+
+  // Handler for updating store settings from Admin Panel
+  const handleUpdateStoreConfig = async (newConfig: Partial<StoreConfig>) => {
+    const updated: StoreConfig = {
+      ...storeConfig,
+      ...newConfig
+    };
+    setStoreConfig(updated);
+    saveStoredStoreConfig(updated);
+    try {
+      const res = await syncSaveStoreConfig(newConfig);
+      if (res.success) {
+        showToast('স্টোর সেটিংস সফলভাবে আপডেট ও সকল ডিভাইসে সিঙ্ক হয়েছে!');
+        return true;
+      } else {
+        showToast(`সিঙ্ক ওয়ার্নিং: ${res.error || 'লোকাল ডেটাবেজে সংরক্ষিত'}`);
+        return true;
+      }
+    } catch (err: any) {
+      showToast('সংরক্ষিত কিন্তু ক্লাউড সিঙ্কে ত্রুটি হয়েছে।');
+      return true;
+    }
+  };
+
+  // Manual Cloud Sync Trigger (Allows any device to force-refresh directly from Firestore)
+  const handleManualCloudSync = async () => {
+    setIsSyncing(true);
+    try {
+      // Fetch latest snapshot directly from cloud database without resurrecting anything
+      const [freshProducts, freshOrders, freshCategories, freshConfig] = await Promise.all([
+        fetchRemoteProducts(),
+        fetchRemoteOrders(),
+        fetchRemoteCategories(),
+        fetchRemoteStoreConfig()
+      ]);
+      if (freshProducts) {
+        setProducts(freshProducts);
+      }
+      if (freshOrders) {
+        setOrders(freshOrders);
+      }
+      if (freshCategories && freshCategories.length > 0) {
+        setCategories(freshCategories);
+      }
+      if (freshConfig) {
+        setStoreConfig(freshConfig);
+      }
+      showToast(`Cloud Sync Complete: Real-time data synchronized!`);
+    } catch (err) {
+      showToast('Cloud Sync error: Check internet connection.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Real-time Cloud Sync across all devices (Mobile & Laptop)
+  useEffect(() => {
+    // Initial local cache load for instant UI display
+    setProducts(getStoredProducts());
+    setOrders(getStoredOrders());
+    setVouchers(getStoredVouchers());
+    setCart(getStoredCart());
+    setWishlist(getStoredWishlist());
+    setCategories(getStoredCategories());
+    setStoreConfig(getStoredStoreConfig());
+
+    // Connect real-time listeners to Firestore cloud database
+    const unsubProducts = subscribeToProducts((liveProducts) => {
+      setProducts(liveProducts);
+    });
+    const unsubOrders = subscribeToOrders((liveOrders) => {
+      setOrders(liveOrders);
+    });
+    const unsubVouchers = subscribeToVouchers((liveVouchers) => {
+      setVouchers(liveVouchers);
+    });
+    const unsubCategories = subscribeToCategories((liveCategories) => {
+      if (liveCategories && liveCategories.length > 0) {
+        setCategories(liveCategories);
+      }
+    });
+    const unsubStoreConfig = subscribeToStoreConfig((liveConfig) => {
+      if (liveConfig) {
+        setStoreConfig(liveConfig);
+      }
+    });
+
+    // User requirement: Record website visit every time user visits and listen for live analytics updates
+    recordWebsiteVisit().then(stats => {
+      if (stats) setVisitorStats(stats);
+    }).catch(console.error);
+
+    const unsubAnalytics = subscribeToAnalytics((liveStats) => {
+      if (liveStats) setVisitorStats(liveStats);
+    });
+
+    // Re-sync when switching back to tab or device screen unlocks
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        fetchRemoteProducts().then(prods => {
+          if (prods && prods.length > 0) setProducts(prods);
+        }).catch(console.error);
+        fetchRemoteOrders().then(ordrs => {
+          if (ordrs && ordrs.length > 0) setOrders(ordrs);
+        }).catch(console.error);
+        fetchRemoteCategories().then(cats => {
+          if (cats && cats.length > 0) setCategories(cats);
+        }).catch(console.error);
+        fetchRemoteStoreConfig().then(cfg => {
+          if (cfg) setStoreConfig(cfg);
+        }).catch(console.error);
+        fetchRemoteAnalytics().then(stats => {
+          if (stats) setVisitorStats(stats);
+        }).catch(console.error);
+      }
+    };
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+
+    // Periodic heartbeat sync every 5 seconds to ensure mobile and laptop products, store config, and orders are real-time
+    const syncInterval = setInterval(() => {
+      fetchRemoteProducts().then(prods => {
+        if (prods && prods.length > 0) setProducts(prods);
+      }).catch(console.error);
+      fetchRemoteOrders().then(ordrs => {
+        if (ordrs && ordrs.length > 0) setOrders(ordrs);
+      }).catch(console.error);
+      fetchRemoteCategories().then(cats => {
+        if (cats && cats.length > 0) setCategories(cats);
+      }).catch(console.error);
+      fetchRemoteStoreConfig().then(cfg => {
+        if (cfg) setStoreConfig(cfg);
+      }).catch(console.error);
+      fetchRemoteAnalytics().then(stats => {
+        if (stats) setVisitorStats(stats);
+      }).catch(console.error);
+    }, 5000);
+
+    return () => {
+      unsubProducts();
+      unsubOrders();
+      unsubVouchers();
+      unsubCategories();
+      unsubStoreConfig();
+      unsubAnalytics();
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      clearInterval(syncInterval);
+    };
+  }, []);
+
+  // Save Cart and Wishlist on changes
+  useEffect(() => {
+    saveStoredCart(cart);
+  }, [cart]);
+
+  useEffect(() => {
+    saveStoredWishlist(wishlist);
+  }, [wishlist]);
+
+  // Available unique brands for filter
+  const brands = useMemo(() => {
+    const list = Array.from(new Set(products.map(p => p.brand)));
+    return ['All', ...list];
+  }, [products]);
+
+  // Filter & Sort Logic
+  const filteredProducts = useMemo(() => {
+    return products.filter((item) => {
+      // Category filter
+      if (selectedCategory !== 'All' && item.category !== selectedCategory) {
+        return false;
+      }
+      // Brand filter
+      if (selectedBrand !== 'All' && item.brand !== selectedBrand) {
+        return false;
+      }
+      // Free delivery
+      if (onlyFreeDelivery && !item.freeDelivery) {
+        return false;
+      }
+      // Daraz Mall
+      if (onlyDarazMall && !item.isDarazMall) {
+        return false;
+      }
+      // Flash Sale
+      if (onlyFlashSale && !item.isFlashSale) {
+        return false;
+      }
+      // Search Query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchTitle = item.title.toLowerCase().includes(q);
+        const matchCategory = item.category.toLowerCase().includes(q);
+        const matchBrand = item.brand.toLowerCase().includes(q);
+        const matchDesc = item.description.toLowerCase().includes(q);
+        if (!matchTitle && !matchCategory && !matchBrand && !matchDesc) {
+          return false;
+        }
+      }
+      return true;
+    }).sort((a, b) => {
+      if (sortBy === 'price-asc') return a.price - b.price;
+      if (sortBy === 'price-desc') return b.price - a.price;
+      if (sortBy === 'rating') return b.rating - a.rating;
+      return 0; // featured default
+    });
+  }, [products, selectedCategory, selectedBrand, onlyFreeDelivery, onlyDarazMall, onlyFlashSale, searchQuery, sortBy]);
+
+
+  // Cart Management
+  const handleAddToCart = (
+    product: Product, 
+    quantity = 1, 
+    selectedVariants?: Record<string, string>, 
+    e?: React.MouseEvent
+  ) => {
+    if (e) e.stopPropagation();
+
+    setCart(prevCart => {
+      const existingIdx = prevCart.findIndex(item => 
+        item.product.id === product.id && 
+        JSON.stringify(item.selectedVariants) === JSON.stringify(selectedVariants)
+      );
+
+      if (existingIdx > -1) {
+        const updated = [...prevCart];
+        const newQty = Math.min(product.stock, updated[existingIdx].quantity + quantity);
+        updated[existingIdx] = { ...updated[existingIdx], quantity: newQty };
+        return updated;
+      } else {
+        return [...prevCart, { product, quantity, selectedVariants }];
+      }
+    });
+
+    showToast(`Added "${product.title.slice(0, 24)}..." to cart!`);
+  };
+
+  const handleUpdateCartQuantity = (index: number, newQty: number) => {
+    if (newQty <= 0) {
+      handleRemoveCartItem(index);
+      return;
+    }
+    setCart(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], quantity: newQty };
+      return updated;
+    });
+  };
+
+  const handleRemoveCartItem = (index: number) => {
+    setCart(prev => {
+      const nextCart = prev.filter((_, i) => i !== index);
+      saveStoredCart(nextCart);
+      return nextCart;
+    });
+    showToast('Item removed from cart');
+  };
+
+  const handleOpenQuickBuy = (
+    product: Product,
+    quantity: number = 1,
+    selectedVariants: Record<string, string> = {}
+  ) => {
+    setQuickBuyProduct(product);
+    setQuickBuyQuantity(quantity);
+    setQuickBuyVariants(selectedVariants);
+    setSelectedProduct(null);
+  };
+
+  const handleBuyNow = (
+    product: Product, 
+    quantity: number, 
+    selectedVariants: Record<string, string>
+  ) => {
+    handleOpenQuickBuy(product, quantity, selectedVariants);
+  };
+
+  // Wishlist Toggle
+  const handleToggleWishlist = (productId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+
+    setWishlist(prev => {
+      const exists = prev.includes(productId);
+      if (exists) {
+        showToast('Removed from saved wishlist');
+        return prev.filter(id => id !== productId);
+      } else {
+        showToast('Saved to your wishlist ❤️');
+        return [...prev, productId];
+      }
+    });
+  };
+
+  // Apply Voucher
+  const handleApplyVoucher = (code: string): { success: boolean; message: string } => {
+    const v = vouchers.find(item => item.code.toUpperCase() === code.toUpperCase() && item.isActive);
+    if (!v) {
+      return { success: false, message: 'Invalid or expired coupon code.' };
+    }
+
+    const currentSubtotal = cart.reduce((sum, it) => sum + it.product.price * it.quantity, 0);
+    if (currentSubtotal < v.minSpend) {
+      return { 
+        success: false, 
+        message: `Minimum order value for ${v.code} is ${formatPrice(v.minSpend)}.` 
+      };
+    }
+
+    setAppliedVoucher(v);
+    return { success: true, message: `Voucher ${v.code} applied successfully!` };
+  };
+
+  const handleRemoveVoucher = () => {
+    setAppliedVoucher(null);
+    showToast('Coupon removed');
+  };
+
+  // Handle Order Success
+  const handleOrderSuccess = (newOrder: Order) => {
+    setOrders(getStoredOrders()); // Refresh orders list
+    setProducts(getStoredProducts()); // Refresh stock levels
+    setCart([]); // Clear cart
+    setAppliedVoucher(null);
+    setActiveTrackingOrderId(newOrder.id);
+    setIsTrackingOpen(true);
+    // Background fetch latest orders
+    fetchRemoteOrders().then(ordrs => {
+      if (ordrs && ordrs.length > 0) setOrders(ordrs);
+    }).catch(console.error);
+  };
+
+  // Add Product Review
+  const handleAddReview = (productId: string, review: ProductReview) => {
+    let updatedTargetProduct: Product | null = null;
+    const updatedProducts = products.map(p => {
+      if (p.id === productId) {
+        const currentReviews = p.reviews || [];
+        const newReviews = [review, ...currentReviews];
+        const avgRating = Number((newReviews.reduce((acc, r) => acc + r.rating, 0) / newReviews.length).toFixed(1));
+        updatedTargetProduct = {
+          ...p,
+          reviews: newReviews,
+          reviewCount: p.reviewCount + 1,
+          rating: avgRating
+        };
+        return updatedTargetProduct;
+      }
+      return p;
+    });
+
+    setProducts(updatedProducts);
+    saveStoredProducts(updatedProducts);
+    if (updatedTargetProduct) {
+      syncSaveProduct(updatedTargetProduct).catch(console.error);
+    }
+    if (selectedProduct && selectedProduct.id === productId) {
+      setSelectedProduct(updatedProducts.find(p => p.id === productId) || null);
+    }
+    showToast('Thank you! Your verified review has been posted.');
+  };
+
+  // Admin Actions with Live Multi-Device Sync
+  const handleAdminAddProduct = async (newProd: Product): Promise<boolean> => {
+    const updated = [newProd, ...products];
+    setProducts(updated);
+    saveStoredProducts(updated);
+    const res = await syncSaveProduct(newProd);
+    if (res.success) {
+      showToast(`Product "${newProd.title}" synced to Cloud & Store!`);
+      const remote = await fetchRemoteProducts();
+      if (remote && remote.length > 0) setProducts(remote);
+      return true;
+    } else {
+      showToast(`Saved locally. Cloud sync pending (${res.error}).`);
+      return false;
+    }
+  };
+
+  const handleAdminUpdateProduct = async (updatedProd: Product): Promise<boolean> => {
+    const updated = products.map(p => p.id === updatedProd.id ? updatedProd : p);
+    setProducts(updated);
+    saveStoredProducts(updated);
+    const res = await syncSaveProduct(updatedProd);
+    if (res.success) {
+      showToast(`Product "${updatedProd.title}" updated in Cloud & Store!`);
+      const remote = await fetchRemoteProducts();
+      if (remote && remote.length > 0) setProducts(remote);
+      return true;
+    } else {
+      showToast(`Updated locally. Cloud sync pending (${res.error}).`);
+      return false;
+    }
+  };
+
+  const handleAdminDeleteProduct = async (productId: string): Promise<boolean> => {
+    // 1. Instant optimistic update
+    deleteStoredProduct(productId);
+    setProducts(prev => prev.filter(p => p.id !== productId));
+    
+    // Also remove deleted product from active cart and wishlist
+    setCart(prev => {
+      const nextCart = prev.filter(item => item.product.id !== productId);
+      saveStoredCart(nextCart);
+      return nextCart;
+    });
+    setWishlist(prev => {
+      const nextWishlist = prev.filter(id => id !== productId);
+      saveStoredWishlist(nextWishlist);
+      return nextWishlist;
+    });
+
+    // 2. Delete permanently from Firestore and record in cloud deleted list
+    const res = await syncDeleteProduct(productId);
+    
+    // 3. Re-fetch and strictly filter to guarantee it never appears again
+    const remote = await fetchRemoteProducts();
+    if (remote) {
+      const cleanRemote = remote.filter(p => p.id !== productId);
+      setProducts(cleanRemote);
+      saveStoredProducts(cleanRemote);
+    }
+    
+    if (res.success) {
+      showToast('পণ্যটি সফলভাবে স্টোর ও ক্লাউড থেকে ডিলিট করা হয়েছে!');
+      return true;
+    } else {
+      showToast('পণ্যটি সফলভাবে সরানো হয়েছে।');
+      return false;
+    }
+  };
+
+  const handleAdminUpdateOrderStatus = (orderId: string, status: OrderStatus, carrier?: string, note?: string) => {
+    const prevOrder = orders.find(o => o.id === orderId);
+    const updated = updateOrderStatus(orderId, status, carrier, note);
+    syncUpdateOrderStatus(orderId, status, carrier, note).catch(console.error);
+    if (updated) {
+      setOrders(getStoredOrders());
+      if (status === 'Delivered' && prevOrder?.status !== 'Delivered') {
+        showToast(`🎉 অর্ডার #${orderId} ডেলিভার্ড চিহ্নিত হয়েছে! ${formatPrice(updated.total)} টাকা মোট বিক্রয়ে যুক্ত হয়েছে।`);
+      } else {
+        showToast(`Order ${orderId} updated to ${status}. Tracking updated!`);
+      }
+    }
+  };
+
+  const handleAdminDeleteOrder = async (orderId: string): Promise<boolean> => {
+    const target = orders.find(o => o.id === orderId);
+    const wasDelivered = target?.status === 'Delivered';
+    const amountPreserved = wasDelivered ? (target?.total || 0) : 0;
+
+    const { orders: localUpdated, wasDelivered: wasDeliv } = deleteStoredOrder(orderId);
+    setOrders(localUpdated);
+
+    const res = await syncDeleteOrder(orderId, amountPreserved, wasDelivered ? 1 : 0);
+    
+    // Refresh analytics to reflect any preserved sales
+    fetchRemoteAnalytics().then(setVisitorStats).catch(console.error);
+
+    if (wasDeliv || wasDelivered) {
+      showToast(`অর্ডার #${orderId} সফলভাবে মুছে ফেলা হয়েছে! ডেলিভার্ড সেলস (${formatPrice(amountPreserved)}) মোট বিক্রয়ে অক্ষুণ্ণ আছে।`);
+    } else {
+      showToast(`অর্ডার #${orderId} সফলভাবে ডিলিট করা হয়েছে।`);
+    }
+    return res.success;
+  };
+
+  const handleAdminAddVoucher = (newVoucher: Voucher) => {
+    const updated = [...vouchers, newVoucher];
+    setVouchers(updated);
+    saveStoredVouchers(updated);
+    syncSaveVoucher(newVoucher).catch(console.error);
+    showToast(`Coupon ${newVoucher.code} created!`);
+  };
+
+  const handleAdminDeleteVoucher = (code: string) => {
+    const updated = vouchers.filter(v => v.code !== code);
+    setVouchers(updated);
+    saveStoredVouchers(updated);
+    syncDeleteVoucher(code).catch(console.error);
+    showToast(`Coupon ${code} removed.`);
+  };
+
+  // Admin Category Handlers
+  const handleAdminAddCategory = async (categoryName: string): Promise<boolean> => {
+    const trimmed = categoryName.trim();
+    if (!trimmed) return false;
+    if (categories.some(c => c.toLowerCase() === trimmed.toLowerCase())) {
+      showToast(`Category "${trimmed}" already exists.`);
+      return false;
+    }
+    const updated = [...categories, trimmed];
+    setCategories(updated);
+    saveStoredCategories(updated);
+    const res = await syncSaveCategories(updated);
+    if (res.success) {
+      showToast(`Category "${trimmed}" added & synced to Cloud!`);
+      return true;
+    } else {
+      showToast(`Category "${trimmed}" saved locally.`);
+      return true;
+    }
+  };
+
+  const handleAdminDeleteCategory = async (categoryName: string): Promise<boolean> => {
+    const trimmed = categoryName.trim();
+    const updated = categories.filter(c => c.toLowerCase() !== trimmed.toLowerCase());
+    setCategories(updated);
+    saveStoredCategories(updated);
+
+    // If products were in the deleted category, safely reassign them to the fallback category
+    const fallbackCategory = updated[0] || 'Chargers & Cables';
+    const updatedProducts = products.map(p => {
+      if (p.category.toLowerCase() === trimmed.toLowerCase()) {
+        return { ...p, category: fallbackCategory };
+      }
+      return p;
+    });
+    setProducts(updatedProducts);
+    saveStoredProducts(updatedProducts);
+
+    if (selectedCategory.toLowerCase() === trimmed.toLowerCase()) {
+      setSelectedCategory('All');
+    }
+
+    // Direct cloud sync deletion ensuring all devices remove it and reassign products
+    await syncDeleteCategory(trimmed);
+
+    showToast(`Category "${trimmed}" removed and synced across all devices.`);
+    return true;
+  };
+
+  const handleAdminRenameCategory = async (oldName: string, newName: string): Promise<boolean> => {
+    const trimmedOld = oldName.trim();
+    const trimmedNew = newName.trim();
+    if (!trimmedNew || trimmedOld.toLowerCase() === trimmedNew.toLowerCase()) return false;
+
+    const updatedCategories = categories.map(c => 
+      c.toLowerCase() === trimmedOld.toLowerCase() ? trimmedNew : c
+    );
+    setCategories(updatedCategories);
+    saveStoredCategories(updatedCategories);
+
+    // Update existing products with this category
+    const updatedProducts = products.map(p => {
+      if (p.category.toLowerCase() === trimmedOld.toLowerCase()) {
+        return { ...p, category: trimmedNew };
+      }
+      return p;
+    });
+    setProducts(updatedProducts);
+    saveStoredProducts(updatedProducts);
+
+    // Sync categories & updated products in background
+    syncSaveCategories(updatedCategories).catch(console.error);
+    updatedProducts.filter(p => p.category === trimmedNew).forEach(p => {
+      syncSaveProduct(p).catch(console.error);
+    });
+
+    if (selectedCategory.toLowerCase() === trimmedOld.toLowerCase()) {
+      setSelectedCategory(trimmedNew);
+    }
+    showToast(`Category renamed to "${trimmedNew}"!`);
+    return true;
+  };
+
+  const handleResetToDemo = async () => {
+    await syncResetToDemoDefaults();
+    resetToDemoDefaults();
+  };
+
+  const cartCount = cart.reduce((sum, it) => sum + it.quantity, 0);
+  const cartTotal = cart.reduce((sum, it) => sum + it.product.price * it.quantity, 0);
+
+  return (
+    <div className={`min-h-screen ${isDarkMode ? 'bg-slate-950 text-slate-100 dark' : 'bg-slate-100 text-slate-800'} flex flex-col font-sans transition-colors duration-200 selection:bg-orange-200`}>
+      
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-2.5 rounded shadow-2xl flex items-center gap-2 text-xs font-semibold animate-in slide-in-from-bottom-5 fade-in duration-200 border border-slate-700">
+          <Check className="w-4 h-4 text-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Main Header */}
+      <Header
+        cartCount={cartCount}
+        cartTotal={cartTotal}
+        wishlistCount={wishlist.length}
+        selectedCategory={selectedCategory}
+        onSelectCategory={(cat) => {
+          setSelectedCategory(cat);
+          setSearchQuery('');
+        }}
+        categories={categories}
+        storeConfig={storeConfig}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onOpenCart={() => setIsCartOpen(true)}
+        onOpenTracking={() => {
+          setActiveTrackingOrderId(undefined);
+          setIsTrackingOpen(true);
+        }}
+        onOpenAdmin={() => setIsAdminOpen(true)}
+        onOpenWishlist={() => setIsWishlistOpen(true)}
+        onRefreshCloud={handleManualCloudSync}
+        isSyncing={isSyncing}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={toggleDarkMode}
+      />
+
+      {/* High-Density Layout Container */}
+      <main className="w-full max-w-[1440px] mx-auto p-3 sm:p-4 flex gap-4 flex-1">
+        
+        {/* Left Column: Categories, Filters, and Admin Shortcut */}
+        <aside className="w-52 shrink-0 hidden lg:flex flex-col gap-3">
+          {/* Categories Card */}
+          <div className="bg-white dark:bg-slate-900 p-3.5 shadow-xs rounded-xl border border-slate-200/80 dark:border-slate-800">
+            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 tracking-wider">
+              ক্যাটাগরি সমূহ
+            </h3>
+            <ul className="text-xs space-y-1">
+              {Array.from(new Set(['All', ...categories.filter(c => c !== 'All')])).map((cat) => {
+                const isSelected = selectedCategory === cat;
+                return (
+                  <li
+                    key={cat}
+                    onClick={() => {
+                      setSelectedCategory(cat);
+                      setSearchQuery('');
+                    }}
+                    className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition ${
+                      isSelected
+                        ? 'text-emerald-800 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60 dark:border-emerald-800/60'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    {isSelected && <div className="w-1.5 h-3.5 bg-emerald-700 rounded-full" />}
+                    <span className="truncate">{cat === 'All' ? 'সব পণ্য' : cat}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          {/* Quick Filters Card */}
+          <div className="bg-white dark:bg-slate-900 p-3.5 shadow-xs rounded-xl border border-slate-200/80 dark:border-slate-800 text-xs">
+            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 tracking-wider">
+              ফিল্টার
+            </h3>
+            <div className="space-y-2">
+              <div>
+                <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block mb-1">ব্র্যান্ড</label>
+                <select
+                  value={selectedBrand}
+                  onChange={(e) => setSelectedBrand(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-1.5 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:border-emerald-600"
+                >
+                  {brands.map(b => (
+                    <option key={b} value={b}>{b === 'All' ? 'সব ব্র্যান্ড' : b}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={onlyDarazMall}
+                    onChange={(e) => setOnlyDarazMall(e.target.checked)}
+                    className="accent-emerald-700 rounded"
+                  />
+                  <span className="text-slate-700 dark:text-slate-300 font-medium">অরিজিনাল মল পণ্য</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={onlyFreeDelivery}
+                    onChange={(e) => setOnlyFreeDelivery(e.target.checked)}
+                    className="accent-emerald-700 rounded"
+                  />
+                  <span className="text-slate-700 dark:text-slate-300 font-medium">ফ্রি ডেলিভারি</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={onlyFlashSale}
+                    onChange={(e) => setOnlyFlashSale(e.target.checked)}
+                    className="accent-emerald-700 rounded"
+                  />
+                  <span className="text-slate-700 dark:text-slate-300 font-medium">হট অফার / ফ্ল্যাশ সেল</span>
+                </label>
+              </div>
+
+              {(selectedBrand !== 'All' || onlyDarazMall || onlyFreeDelivery || onlyFlashSale) && (
+                <button
+                  onClick={() => {
+                    setSelectedBrand('All');
+                    setOnlyDarazMall(false);
+                    setOnlyFreeDelivery(false);
+                    setOnlyFlashSale(false);
+                  }}
+                  className="w-full mt-2 py-1.5 text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-slate-800 rounded-lg text-center transition cursor-pointer border border-emerald-200 dark:border-emerald-800"
+                >
+                  ফিল্টার মুছুন
+                </button>
+              )}
+            </div>
+          </div>
+        </aside>
+
+        {/* Center Section: Banner, Header bar & Product Grid */}
+        <section className="flex-1 flex flex-col gap-3 min-w-0">
+          
+          {/* Flash Sale Banner with Live Timer */}
+          <FlashSaleBanner 
+            onSelectVoucher={(code) => {
+              handleApplyVoucher(code);
+              showToast(`কুপন ${code} সফলভাবে যোগ করা হয়েছে!`);
+            }} 
+          />
+          {/* Customer Trust & Buyer Protection Guarantees */}
+          <TrustBadges />
+
+          {/* Catalog Controls / Header Bar */}
+          <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2">
+              <h1 className="font-bold text-slate-900 dark:text-white">
+                {searchQuery ? (
+                  <span>অনুসন্ধান ফলাফল &ldquo;<span className="text-emerald-800 dark:text-emerald-400">{searchQuery}</span>&rdquo;</span>
+                ) : selectedCategory === 'All' ? (
+                  <span>সকল প্রিমিয়াম গ্যাজেট ও এক্সেসরিজ</span>
+                ) : (
+                  <span>{selectedCategory}</span>
+                )}
+              </h1>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                ({filteredProducts.length} টি পণ্য)
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 ml-auto">
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500 dark:text-slate-400 text-[11px]">সাজান:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:border-emerald-600"
+                >
+                  <option value="featured">জনপ্রিয় (Featured)</option>
+                  <option value="price-asc">দাম: কম থেকে বেশি</option>
+                  <option value="price-desc">দাম: বেশি থেকে কম</option>
+                  <option value="rating">সেরা রেটিং</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Product Grid */}
+          {filteredProducts.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-10 text-center my-4 shadow-xs">
+              <Smartphone className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">কোনো পণ্য পাওয়া যায়নি</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                অন্য কোনো নামে সার্চ করুন অথবা ফিল্টার পরিবর্তন করুন।
+              </p>
+              <button
+                onClick={() => {
+                  setSelectedCategory('All');
+                  setSelectedBrand('All');
+                  setOnlyDarazMall(false);
+                  setOnlyFreeDelivery(false);
+                  setOnlyFlashSale(false);
+                  setSearchQuery('');
+                }}
+                className="mt-3 px-4 py-2 rounded-xl bg-emerald-800 text-white text-xs font-bold hover:bg-emerald-900 transition cursor-pointer"
+              >
+                সব ফিল্টার মুছুন
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5">
+              {filteredProducts.map((product, idx) => (
+                <React.Fragment key={product.id}>
+                  {/* High Density Promotion Card */}
+                  {idx === 2 && (
+                    <div className="col-span-2 bg-gradient-to-br from-[#063b1d] to-[#0b542a] rounded-xl p-4 text-white flex flex-col justify-center shadow-xs border border-emerald-700/40">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">স্পেশাল মেগা অফার</span>
+                      <h3 className="text-base sm:text-lg font-black mt-1">প্রিমিয়াম গ্রাহক ক্লাব</h3>
+                      <p className="text-xs text-emerald-100/90 mt-0.5 leading-relaxed">
+                        কুপন কোড ব্যবহার করে অতিরিক্ত ছাড় ও সারাদেশে দ্রুত হোম ডেলিভারি নিশ্চিত করুন।
+                      </p>
+                      <button 
+                        onClick={() => {
+                          handleApplyVoucher('KHAN10');
+                          showToast('১০% স্পেশাল ভাউচার যোগ হয়েছে!');
+                        }}
+                        className="mt-3 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black py-1.5 px-3.5 rounded-lg w-max transition cursor-pointer shadow-sm"
+                      >
+                        ১০% ছাড় কুপন নিন
+                      </button>
+                    </div>
+                  )}
+
+                  <ProductCard
+                    product={product}
+                    isWishlisted={wishlist.includes(product.id)}
+                    onAddToCart={(p, e) => handleAddToCart(p, 1, undefined, e)}
+                    onQuickBuy={(p) => handleOpenQuickBuy(p, 1, {})}
+                    onToggleWishlist={handleToggleWishlist}
+                    onSelectProduct={setSelectedProduct}
+                  />
+                </React.Fragment>
+              ))}
+            </div>
+          )}
+
+          {/* Recently Viewed Accessories */}
+          <RecentlyViewed
+            allProducts={products}
+            wishlist={wishlist}
+            onSelectProduct={setSelectedProduct}
+            onAddToCart={(p, e) => handleAddToCart(p, 1, undefined, e)}
+            onQuickBuy={(p) => handleOpenQuickBuy(p, 1, {})}
+            onToggleWishlist={handleToggleWishlist}
+          />
+        </section>
+
+        {/* Right Aside: Order Tracking & Secure Payment */}
+        <aside className="w-64 shrink-0 hidden xl:flex flex-col gap-3">
+          {/* Live Order Tracker Card */}
+          <div className="bg-white dark:bg-slate-900 p-3.5 shadow-xs rounded-xl border border-slate-200/80 dark:border-slate-800">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">লাইভ কুরিয়ার ট্র্যাকিং</h3>
+              <span className="text-[10px] text-emerald-800 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded">সরাসরি ট্র্যাক</span>
+            </div>
+            
+            <div className="flex gap-1.5 mb-3">
+              <input 
+                type="text" 
+                placeholder="অর্ডার আইডি / ফোন নং" 
+                value={quickTrackInput}
+                onChange={(e) => setQuickTrackInput(e.target.value)}
+                className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-600"
+              />
+              <button 
+                onClick={() => {
+                  if (quickTrackInput.trim()) {
+                    setActiveTrackingOrderId(quickTrackInput.trim());
+                  }
+                  setIsTrackingOpen(true);
+                }}
+                className="bg-emerald-800 hover:bg-emerald-900 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg cursor-pointer transition"
+              >
+                খুঁজুন
+              </button>
+            </div>
+
+            {/* Quick status timeline */}
+            <div className="space-y-3 border-l-2 border-emerald-200 dark:border-emerald-800 pl-3.5 ml-1.5 text-xs my-3">
+              <div className="relative">
+                <div className="absolute -left-[18px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-600 ring-4 ring-emerald-100 dark:ring-emerald-950" />
+                <div className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">অর্ডার কনফার্মড</div>
+                <div className="text-[10px] text-slate-400">পণ্য প্যাকেজিং সম্পন্ন</div>
+              </div>
+              <div className="relative">
+                <div className="absolute -left-[18px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-700 ring-4 ring-emerald-100 dark:ring-emerald-950" />
+                <div className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">কুরিয়ারে হস্তান্তর</div>
+                <div className="text-[10px] text-slate-400">Steadfast / RedX কুরিয়ারে রওয়ানা</div>
+              </div>
+              <div className="relative">
+                <div className="absolute -left-[18px] top-1 w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-700 ring-4 ring-white dark:ring-slate-900" />
+                <div className="font-semibold text-slate-500 dark:text-slate-400 text-[11px]">হোম ডেলিভারি</div>
+                <div className="text-[10px] text-slate-400">ক্যাশ অন ডেলিভারিতে পণ্য গ্রহণ</div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setActiveTrackingOrderId(quickTrackInput.trim() || undefined);
+                setIsTrackingOpen(true);
+              }}
+              className="w-full mt-2 py-2 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-lg transition cursor-pointer border border-emerald-200 dark:border-emerald-800 text-center"
+            >
+              সম্পূর্ণ ট্র্যাকিং পেজ খুলুন
+            </button>
+          </div>
+
+          {/* Secure Payment Card */}
+          <div className="bg-white dark:bg-slate-900 p-3.5 shadow-xs rounded-xl border border-slate-200/80 dark:border-slate-800 flex-1 flex flex-col justify-between text-xs">
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                <h3 className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">নিরাপদ কেনাকাটা</h3>
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed mb-3">
+                পণ্য হাতে পেয়ে চেক করে সম্পূর্ণ মূল্য পরিশোধ করুন। কোনো অগ্রিম পেমেন্টের ঝুঁকি নেই।
+              </p>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700/60">
+                  <span className="font-medium text-slate-700 dark:text-slate-200 text-[11px]">ক্যাশ অন ডেলিভারি (COD)</span>
+                  <span className="text-[9px] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded">ভেরিফাইড</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700/60">
+                  <span className="font-medium text-slate-700 dark:text-slate-200 text-[11px]">বিকাশ / নগদ / রকেট</span>
+                  <span className="text-[9px] bg-pink-100 dark:bg-pink-950 text-pink-800 dark:text-pink-300 font-bold px-1.5 py-0.5 rounded">পেমেন্ট</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700/60">
+                  <span className="font-medium text-slate-700 dark:text-slate-200 text-[11px]">ভিসা ও মাস্টারকার্ড</span>
+                  <span className="text-[9px] bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 font-bold px-1.5 py-0.5 rounded">সিকিউরড</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">© {new Date().getFullYear()} {storeConfig.storeName || 'KHAN GADGET MALL'}</div>
+              <div className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">ঘরের বাজার স্টাইলে ফ্রেশ ও অথেনটিক</div>
+            </div>
+          </div>
+        </aside>
+
+      </main>
+
+      {/* Footer */}
+      <Footer 
+        storeConfig={storeConfig}
+        onOpenTracking={() => {
+          setActiveTrackingOrderId(undefined);
+          setIsTrackingOpen(true);
+        }}
+        onOpenAdmin={() => setIsAdminOpen(true)}
+      />
+
+      {/* MODAL: Product Detail */}
+      {selectedProduct && (
+        <ProductDetailModal
+          product={selectedProduct}
+          isWishlisted={wishlist.includes(selectedProduct.id)}
+          onClose={() => setSelectedProduct(null)}
+          onAddToCart={(p, q, v) => handleAddToCart(p, q, v)}
+          onBuyNow={handleBuyNow}
+          onToggleWishlist={(id) => handleToggleWishlist(id)}
+          onAddReview={handleAddReview}
+        />
+      )}
+
+      {/* DRAWER: Shopping Cart */}
+      <CartDrawer
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cart={cart}
+        onUpdateQuantity={handleUpdateCartQuantity}
+        onRemoveItem={handleRemoveCartItem}
+        onProceedToCheckout={() => {
+          setIsCartOpen(false);
+          setIsCheckoutOpen(true);
+        }}
+        appliedVoucher={appliedVoucher}
+        onApplyVoucher={handleApplyVoucher}
+        onRemoveVoucher={handleRemoveVoucher}
+      />
+
+      {/* MODAL: 1-Click Fast Buy Now Modal (১-ক্লিক ফাস্ট চেকআউট) */}
+      <QuickOrderModal
+        isOpen={Boolean(quickBuyProduct)}
+        product={quickBuyProduct}
+        initialQuantity={quickBuyQuantity}
+        initialVariants={quickBuyVariants}
+        onClose={() => setQuickBuyProduct(null)}
+        onOrderSuccess={(newOrder) => {
+          handleOrderSuccess(newOrder);
+          showToast(`⚡ ১-ক্লিক অর্ডার সম্পন্ন হয়েছে! অর্ডার আইডি: ${newOrder.id}`);
+        }}
+        onOpenTracking={(orderId) => {
+          setActiveTrackingOrderId(orderId);
+          setIsTrackingOpen(true);
+        }}
+      />
+
+      {/* MODAL: Checkout with Secure Payments */}
+      <CheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        cart={cart}
+        appliedVoucher={appliedVoucher}
+        onOrderSuccess={handleOrderSuccess}
+      />
+
+      {/* MODAL: Live Order Tracking */}
+      <OrderTrackingModal
+        isOpen={isTrackingOpen}
+        onClose={() => setIsTrackingOpen(false)}
+        initialOrderId={activeTrackingOrderId}
+      />
+
+      {/* MODAL: Admin Panel */}
+      <AdminPanel
+        isOpen={isAdminOpen}
+        onClose={() => setIsAdminOpen(false)}
+        products={products}
+        orders={orders}
+        vouchers={vouchers}
+        categories={categories}
+        storeConfig={storeConfig}
+        onUpdateStoreConfig={handleUpdateStoreConfig}
+        visitorStats={visitorStats}
+        onAddProduct={handleAdminAddProduct}
+        onUpdateProduct={handleAdminUpdateProduct}
+        onDeleteProduct={handleAdminDeleteProduct}
+        onUpdateOrderStatus={handleAdminUpdateOrderStatus}
+        onDeleteOrder={handleAdminDeleteOrder}
+        onAddVoucher={handleAdminAddVoucher}
+        onDeleteVoucher={handleAdminDeleteVoucher}
+        onAddCategory={handleAdminAddCategory}
+        onDeleteCategory={handleAdminDeleteCategory}
+        onRenameCategory={handleAdminRenameCategory}
+        onRefreshCloud={handleManualCloudSync}
+        isSyncing={isSyncing}
+      />
+
+      {/* MODAL / DRAWER: Wishlist */}
+      {isWishlistOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex justify-end">
+          <div className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between p-5 animate-in slide-in-from-right duration-200">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-gray-200 mb-4">
+                <div className="flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-rose-500 fill-rose-500" />
+                  <h3 className="font-bold text-gray-900 text-base">Saved Wishlist ({wishlist.length})</h3>
+                </div>
+                <button onClick={() => setIsWishlistOpen(false)}>
+                  <X className="w-5 h-5 text-gray-400 hover:text-gray-700" />
+                </button>
+              </div>
+
+              {wishlist.length === 0 ? (
+                <div className="text-center py-16 text-gray-400">
+                  <Heart className="w-12 h-12 text-gray-200 mx-auto mb-2" />
+                  <p className="font-semibold text-gray-700 text-xs">No saved items yet.</p>
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    Click the heart icon on any charger or accessory to save it!
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3 overflow-y-auto max-h-[75vh]">
+                  {products.filter(p => wishlist.includes(p.id)).map(prod => (
+                    <div key={prod.id} className="flex gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                      <img
+                        src={prod.image}
+                        alt={prod.title}
+                        referrerPolicy="no-referrer"
+                        className="w-14 h-14 object-contain rounded bg-white p-1 border border-gray-100"
+                      />
+                      <div className="flex-1 min-w-0 flex flex-col justify-between text-xs">
+                        <div className="font-medium text-gray-900 truncate">{prod.title}</div>
+                        <div className="font-bold text-emerald-800">{formatPrice(prod.price)}</div>
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            onClick={() => {
+                              handleAddToCart(prod, 1);
+                              setIsWishlistOpen(false);
+                            }}
+                            className="bg-emerald-700 text-white text-[11px] font-bold px-3 py-1 rounded-md hover:bg-emerald-800 cursor-pointer"
+                          >
+                            কার্টে যোগ করুন
+                          </button>
+                          <button
+                            onClick={() => handleToggleWishlist(prod.id)}
+                            className="text-gray-400 hover:text-rose-600 text-[11px] cursor-pointer"
+                          >
+                            মুছে ফেলুন
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => setIsWishlistOpen(false)}
+              className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Floating WhatsApp Action Button */}
+      {(() => {
+        const rawDigits = (storeConfig.phone || '01854774406').replace(/[^0-9]/g, '');
+        const targetPhone = rawDigits.startsWith('88') ? rawDigits : '88' + rawDigits;
+        const chatUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(`Hello ${storeConfig.storeName || 'KHAN GADGET MALL'}, I have an inquiry.`)}`;
+        return (
+          <a
+            href={chatUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="fixed bottom-5 right-5 z-40 bg-[#25D366] hover:bg-[#20ba59] text-white px-3.5 py-2.5 rounded-full shadow-2xl flex items-center gap-2 transition hover:scale-105 cursor-pointer border border-white/20"
+            title={`WhatsApp Support: ${storeConfig.phone}`}
+          >
+            <MessageCircle className="w-5 h-5 fill-white" />
+            <span className="text-xs font-bold hidden sm:inline">WhatsApp</span>
+            <span className="text-[11px] font-mono hidden md:inline">{storeConfig.phone}</span>
+          </a>
+        );
+      })()}
+
+    </div>
+  );
+}
