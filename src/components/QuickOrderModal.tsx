@@ -123,7 +123,7 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
 
     try {
       const randomId = Math.floor(100000 + Math.random() * 900000);
-      const orderId = `KG-${randomId}-BD`;
+      const orderId = `KF-${randomId}-BD`;
       const trackingNo = `STD-BD-${Math.floor(10000000 + Math.random() * 90000000)}`;
       const now = new Date();
       const dateStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ', ' + now.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
@@ -133,7 +133,7 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
       const shippingInfo: ShippingAddress = {
         fullName: fullName.trim(),
         phone: cleanPhone,
-        email: 'esakhan5477@gmail.com',
+        email: 'info@khanfashion.com',
         city: shippingCity,
         province: deliveryArea === 'inside_dhaka' ? 'Dhaka Division' : 'Bangladesh',
         address: address.trim(),
@@ -246,19 +246,19 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Top Header */}
-        <div className="bg-gradient-to-r from-emerald-800 to-[#0a4625] px-5 py-3.5 text-white flex items-center justify-between shadow-sm shrink-0">
+        <div className="bg-[#0c1017] border-b border-slate-800 px-5 py-3.5 text-white flex items-center justify-between shadow-sm shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-white shrink-0">
-              <Zap className="w-5 h-5 fill-amber-300 text-amber-300" />
+            <div className="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center shrink-0">
+              <Zap className="w-4 h-4 fill-slate-950" />
             </div>
             <div>
-              <h3 className="font-black text-sm sm:text-base leading-tight flex items-center gap-1.5">
+              <h3 className="font-black text-sm sm:text-base leading-tight flex items-center gap-1.5 text-white">
                 <span>১-ক্লিক ফাস্ট অর্ডার (Buy Now)</span>
-                <span className="bg-white/20 text-[10px] font-bold px-2 py-0.5 rounded-full border border-white/30 tracking-wide">
+                <span className="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-500/30 tracking-wide">
                   ফাস্ট চেকআউট
                 </span>
               </h3>
-              <p className="text-[11px] text-emerald-100 font-medium">
+              <p className="text-[11px] text-slate-400 font-medium">
                 কার্ট ছাড়াই মাত্র ৩০ সেকেন্ডে ক্যাশ অন ডেলিভারিতে অর্ডার করুন
               </p>
             </div>
@@ -380,13 +380,13 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
             /* ORDER FORM STATE */
             <form onSubmit={handleConfirmOrder} className="space-y-4">
               {/* Product Brief Summary Card */}
-              <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-xl p-3 flex items-center gap-3">
-                <div className="w-16 h-16 rounded-lg bg-white border border-emerald-100 p-1 shrink-0 flex items-center justify-center overflow-hidden">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center gap-3">
+                <div className="w-16 h-16 rounded-lg bg-white border border-slate-200 p-1 shrink-0 flex items-center justify-center overflow-hidden">
                   <img
                     src={product.image}
                     alt={product.title}
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-contain mix-blend-multiply"
+                    className="w-full h-full object-contain"
                   />
                 </div>
 
@@ -395,7 +395,7 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
                     {product.title}
                   </h4>
                   <div className="flex items-center gap-2 text-xs mt-0.5">
-                    <span className="text-emerald-800 font-bold text-sm">
+                    <span className="text-amber-600 font-bold text-sm">
                       {formatPrice(product.price)}
                     </span>
                     {product.originalPrice > product.price && (
@@ -410,7 +410,7 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
                     )}
                   </div>
                   <p className="text-[11px] text-gray-500 mt-0.5">
-                    ব্র্যান্ড: <strong className="text-gray-700">{product.brand}</strong> | স্টক: <span className="text-emerald-700 font-semibold">{product.stock} টি উপলব্ধ</span>
+                    ব্র্যান্ড: <strong className="text-gray-700">{product.brand}</strong> | স্টক: <span className="text-amber-600 font-semibold">{product.stock} টি উপলব্ধ</span>
                   </p>
                 </div>
               </div>
@@ -634,16 +634,16 @@ export const QuickOrderModal: React.FC<QuickOrderModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting || product.stock <= 0}
-                  className="w-full py-3.5 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm sm:text-base rounded-xl shadow-md shadow-emerald-900/20 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
+                  className="w-full py-3.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm sm:text-base rounded-xl shadow-md flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
                       <span>অর্ডার তৈরি হচ্ছে...</span>
                     </>
                   ) : (
                     <>
-                      <Zap className="w-5 h-5 fill-amber-300 text-amber-300" />
+                      <Zap className="w-5 h-5 fill-slate-950 text-slate-950" />
                       <span>অর্ডারটি নিশ্চিত করুন - {formatPrice(grandTotal)}</span>
                     </>
                   )}

@@ -1,32 +1,20 @@
 export const DEFAULT_CATEGORIES: string[] = [
-  'Electronic Gadget',
-  'Food Items',
-  "Men's Fashion",
+  "Men's Clothing",
   "Women's Fashion",
-  'Smartwatches & Wearables',
-  'Power Banks',
-  'Chargers & Cables',
-  'Audio & Earbuds',
-  'Cases & Covers',
-  'Screen Protectors',
-  'Holders & Mounts',
-  'Gaming Accessories'
+  'Smart Gadgets',
+  'Audio & Sound',
+  'Watches & Accessories',
+  'Chargers & Power'
 ];
 
 export type ProductCategory = 
   | 'All'
-  | 'Electronic Gadget'
-  | 'Food Items'
-  | "Men's Fashion"
+  | "Men's Clothing"
   | "Women's Fashion"
-  | 'Smartwatches & Wearables'
-  | 'Power Banks'
-  | 'Chargers & Cables'
-  | 'Audio & Earbuds'
-  | 'Cases & Covers'
-  | 'Screen Protectors'
-  | 'Holders & Mounts'
-  | 'Gaming Accessories'
+  | 'Smart Gadgets'
+  | 'Audio & Sound'
+  | 'Watches & Accessories'
+  | 'Chargers & Power'
   | (string & {});
 
 export const CATEGORIES: ProductCategory[] = [
@@ -61,7 +49,7 @@ export interface Product {
   isDarazMall?: boolean;
   freeDelivery?: boolean;
   variants?: {
-    name: string; // e.g. "Color" or "Model"
+    name: string; // e.g. "Size", "Color" or "Model"
     options: string[];
   }[];
   reviews?: ProductReview[];
@@ -161,12 +149,12 @@ export interface StoreConfig {
 }
 
 export const DEFAULT_STORE_CONFIG: StoreConfig = {
-  storeName: 'KHAN GADGET MALL',
+  storeName: 'KHAN FASHION',
   phone: '01854774406',
-  about: "Bangladesh's premium mobile accessories mall for fast chargers, MagSafe cases, earbuds, and gaming gear.",
+  about: "Bangladesh's premier luxury destination for bespoke clothing, executive Panjabi, and modern smart gadgets.",
   adminPassword: 'ESA006##',
-  announcementText: '🔥 আজকের স্পেশাল অফার: যেকোনো গ্যাজেট অর্ডারে ১০% ইনস্ট্যান্ট ছাড়! প্রোমোকোড: KHAN10 | সারাদেশে ক্যাশ অন ডেলিভারি (COD) | ১০০% অরিজিনাল প্রোডাক্টের গ্যারান্টি',
+  announcementText: '🔥 KHAN FASHION স্পেশাল অফার: সকল কালেকশনে ১০% ইনস্ট্যান্ট ডিসকাউন্ট! কোড: FASHION10 | সারা দেশে ক্যাশ অন ডেলিভারি',
   announcementEnabled: true,
-  seoTitle: "KHAN GADGET MALL | Bangladesh's Mobile Accessories Mall",
-  seoDescription: "সকল প্রিমিয়াম গ্যাজেট ও এক্সেসরিজ · প্রিমিয়াম গ্রাহক ক্লাব · লাইভ কুরিয়ার ট্র্যাকিং."
+  seoTitle: "KHAN FASHION | Premium Clothing & Smart Gadgets Bangladesh",
+  seoDescription: "প্রিমিয়াম পোশাক, পাঞ্জাবি, পোলো এবং আধুনিক ইলেকট্রনিক গ্যাজেট · ক্যাশ অন ডেলিভারি · লাইভ কুরিয়ার ট্র্যাকিং."
 };

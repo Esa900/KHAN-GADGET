@@ -113,16 +113,16 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
   const getStatusBadgeColor = (status: OrderStatus) => {
     switch (status) {
       case 'Delivered':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+        return 'bg-amber-100 text-amber-900 border-amber-300';
       case 'Out for Delivery':
         return 'bg-blue-100 text-blue-800 border-blue-300';
       case 'Shipped':
       case 'Processing':
-        return 'bg-amber-100 text-amber-800 border-amber-300';
+        return 'bg-amber-50 text-amber-800 border-amber-200';
       case 'Cancelled':
         return 'bg-rose-100 text-rose-800 border-rose-300';
       default:
-        return 'bg-amber-100 text-amber-800 border-amber-300';
+        return 'bg-slate-100 text-slate-800 border-slate-300';
     }
   };
 
@@ -133,19 +133,19 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-emerald-800 via-emerald-900 to-green-950 text-white flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-700/60 border border-emerald-500/40 text-emerald-200 flex items-center justify-center">
+        <div className="px-6 py-4 border-b border-slate-800 bg-[#0c1017] text-white flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-md">
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-black text-white text-base sm:text-lg">{storeConfig.storeName || 'KHAN GADGET MALL'} অর্ডার ট্র্যাকিং</h2>
-              <p className="text-xs text-emerald-200/90">অর্ডার আইডি বা মোবাইল নম্বর দিয়ে লাইভ পার্সেল ট্র্যাক করুন</p>
+              <h2 className="font-black text-white text-base sm:text-lg">{storeConfig.storeName || 'KHAN FASHION'} অর্ডার ট্র্যাকিং</h2>
+              <p className="text-xs text-slate-400">অর্ডার আইডি বা মোবাইল নম্বর দিয়ে লাইভ পার্সেল ট্র্যাক করুন</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-1.5 text-emerald-200 hover:text-white rounded-full hover:bg-emerald-800/60 transition cursor-pointer"
+            className="p-1.5 text-slate-400 hover:text-white rounded-full hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -165,14 +165,14 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
                   setSearchQuery(e.target.value);
                   if (searchError) setSearchError('');
                 }}
-                className="w-full text-xs sm:text-sm pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:border-emerald-600 focus:bg-white font-mono"
+                className="w-full text-xs sm:text-sm pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:border-amber-500 focus:bg-white font-mono"
               />
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             </div>
             <button
               type="submit"
               disabled={isSearchingRemote}
-              className="bg-emerald-700 hover:bg-emerald-800 text-white px-5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer flex items-center gap-1.5 shadow-sm disabled:opacity-60"
+              className="bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer flex items-center gap-1.5 shadow-sm disabled:opacity-60"
             >
               {isSearchingRemote ? 'খোঁজা হচ্ছে...' : 'Track'}
             </button>
@@ -188,17 +188,17 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
           {/* Privacy Placeholder when no order has been searched yet */}
           {!selectedOrder && !searchError && (
             <div className="py-10 px-4 text-center bg-slate-50/70 rounded-2xl border border-dashed border-slate-300">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-800 mx-auto flex items-center justify-center mb-3 shadow-xs">
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 mx-auto flex items-center justify-center mb-3 shadow-xs border border-amber-500/20">
                 <Truck className="w-7 h-7" />
               </div>
               <h3 className="font-bold text-slate-800 text-base mb-1">
                 আপনার অর্ডারের বর্তমান অবস্থা জানুন
               </h3>
               <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                অর্ডার করার পর আপনাকে দেওয়া <span className="font-semibold text-slate-700">অর্ডার আইডি (যেমন: KG-849201-BD)</span> অথবা যে <span className="font-semibold text-slate-700">মোবাইল নম্বর</span> দিয়ে অর্ডার করেছিলেন, তা উপরের বক্সে লিখে <span className="text-emerald-700 font-bold">Track</span> বাটনে ক্লিক করুন।
+                অর্ডার করার পর আপনাকে দেওয়া <span className="font-semibold text-slate-700">অর্ডার আইডি (যেমন: KF-948210-BD)</span> অথবা যে <span className="font-semibold text-slate-700">মোবাইল নম্বর</span> দিয়ে অর্ডার করেছিলেন, তা উপরের বক্সে লিখে <span className="text-amber-600 font-bold">Track</span> বাটনে ক্লিক করুন।
               </p>
-              <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-medium">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-medium">
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
                 <span>আপনার অর্ডার ও ব্যক্তিগত তথ্য ১০০% সুরক্ষিত ও গোপনীয়</span>
               </div>
             </div>
@@ -233,7 +233,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
                   </div>
                   <div>
                     <span className="text-gray-400 block text-[10px]">Estimated Delivery</span>
-                    <span className="font-semibold text-emerald-400">{selectedOrder.estimatedDelivery}</span>
+                    <span className="font-semibold text-amber-400">{selectedOrder.estimatedDelivery}</span>
                   </div>
                   <div>
                     <span className="text-gray-400 block text-[10px]">Total Amount</span>
@@ -252,7 +252,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
                     href={getCourierTrackingUrl(selectedOrder.carrierName, selectedOrder.trackingNumber)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-sm transition"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-sm transition"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                     <span>Track on Official Courier Website ({selectedOrder.carrierName.split(' ')[0]})</span>
@@ -263,7 +263,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
               {/* Live Tracking Checkpoint Timeline */}
               <div className="bg-gray-50/70 border border-gray-200 rounded-2xl p-5 space-y-4">
                 <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-emerald-700" />
+                  <Clock className="w-4 h-4 text-amber-600" />
                   <span>Shipment Journey & Status Logs</span>
                 </h4>
 
@@ -275,8 +275,8 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
                         <div className={`absolute -left-6 sm:-left-8 top-0.5 w-6 h-6 rounded-full flex items-center justify-center text-xs transition ${
                           cp.completed
                             ? cp.current 
-                              ? 'bg-emerald-700 text-white ring-4 ring-emerald-100 shadow'
-                              : 'bg-emerald-500 text-white'
+                              ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-500/20 shadow font-bold'
+                              : 'bg-amber-500 text-slate-950'
                             : 'bg-gray-200 text-gray-400'
                         }`}>
                           {cp.completed ? (
@@ -290,11 +290,11 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
                         <div className="bg-white p-3.5 rounded-xl border border-gray-200/80 shadow-xs">
                           <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
                             <h5 className={`text-xs sm:text-sm font-bold ${
-                              cp.current ? 'text-emerald-700' : 'text-gray-900'
+                              cp.current ? 'text-amber-600' : 'text-gray-900'
                             }`}>
                               {cp.title}
                               {cp.current && (
-                                <span className="ml-2 text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-extrabold uppercase">
+                                <span className="ml-2 text-[10px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full font-extrabold uppercase">
                                   Current Status
                                 </span>
                               )}
@@ -322,8 +322,8 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
                 {/* Items */}
                 <div className="bg-white p-4 rounded-xl border border-gray-200 space-y-2">
                   <h5 className="font-bold text-gray-800 flex items-center gap-1.5 pb-2 border-b border-gray-100">
-                    <Package className="w-4 h-4 text-emerald-700" />
-                    <span>Ordered Mobile Accessories</span>
+                    <Package className="w-4 h-4 text-amber-500" />
+                    <span>Ordered Items</span>
                   </h5>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {selectedOrder.items.map((item, idx) => (
@@ -355,7 +355,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
                 {/* Recipient */}
                 <div className="bg-white p-4 rounded-xl border border-gray-200 space-y-2">
                   <h5 className="font-bold text-gray-800 flex items-center gap-1.5 pb-2 border-b border-gray-100">
-                    <MapPin className="w-4 h-4 text-emerald-700" />
+                    <MapPin className="w-4 h-4 text-amber-500" />
                     <span>Delivery Details</span>
                   </h5>
                   <div className="space-y-1 text-gray-600">

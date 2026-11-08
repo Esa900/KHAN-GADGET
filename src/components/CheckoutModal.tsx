@@ -40,7 +40,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   onOrderSuccess
 }) => {
   const storeConfig = getStoredStoreConfig();
-  const currentStoreName = storeConfig.storeName || 'KHAN GADGET MALL';
+  const currentStoreName = storeConfig.storeName || 'KHAN FASHION';
   const [step, setStep] = useState<'checkout' | 'confirmed'>('checkout');
 
   // Fields explicitly requested: Name, Phone, City, Address, Customer Note
@@ -364,10 +364,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Banknote className="w-4 h-4 text-emerald-600" />
+                        <Banknote className="w-4 h-4 text-amber-500" />
                         <span className="text-xs font-bold text-gray-900">Cash on Delivery (ক্যাশ অন ডেলিভারি)</span>
                       </div>
-                      <span className="text-[10px] bg-emerald-100 text-emerald-700 font-black px-2 py-0.5 rounded">
+                      <span className="text-[10px] bg-amber-100 text-amber-800 font-black px-2 py-0.5 rounded">
                         SELECTED
                       </span>
                     </div>
@@ -383,10 +383,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <div className="text-left w-full sm:w-auto">
                   <div className="text-[11px] text-gray-500 flex items-center gap-2">
                     <span>Subtotal: {formatPrice(subtotal)}</span>
-                    {discount > 0 && <span className="text-emerald-600 font-bold">-{formatPrice(discount)}</span>}
+                    {discount > 0 && <span className="text-amber-600 font-bold">-{formatPrice(discount)}</span>}
                     <span>Delivery: {isFreeShipping ? 'FREE' : formatPrice(shippingFee)}</span>
                   </div>
-                  <div className="text-lg font-black text-[#f85606]">
+                  <div className="text-lg font-black text-amber-600">
                     Total: {formatPrice(grandTotal)}
                   </div>
                 </div>
@@ -407,17 +407,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     )}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full sm:w-auto py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs"
+                    className="w-full sm:w-auto py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs flex items-center justify-center gap-1.5 transition border border-amber-500/30"
                     title="Order directly with WhatsApp chat"
                   >
-                    <MessageCircle className="w-4 h-4 fill-white text-emerald-600" />
+                    <MessageCircle className="w-4 h-4 text-amber-400" />
                     <span>WhatsApp Order</span>
                   </a>
 
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full sm:w-auto py-3 px-8 rounded-xl bg-[#f85606] hover:bg-[#e04a00] text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 transition cursor-pointer disabled:opacity-50"
+                    className="w-full sm:w-auto py-3 px-8 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition cursor-pointer disabled:opacity-50"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>{isSubmitting ? 'Confirming...' : 'CONFIRM ORDER (Cash on Delivery)'}</span>
@@ -430,7 +430,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             /* Order Confirmed Step */
             confirmedOrder && (
               <div className="space-y-4 text-center py-2">
-                <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
+                <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto shadow-inner">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
 
@@ -475,11 +475,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   )}
                   <div className="flex items-center justify-between pb-2 border-b border-gray-200">
                     <span className="text-gray-500">Payment Method:</span>
-                    <span className="font-bold text-emerald-700">Cash on Delivery (COD)</span>
+                    <span className="font-bold text-amber-600">Cash on Delivery (COD)</span>
                   </div>
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-gray-700 font-bold">Total Payable at Delivery:</span>
-                    <span className="text-base font-black text-[#f85606]">{formatPrice(confirmedOrder.total)}</span>
+                    <span className="text-base font-black text-amber-600">{formatPrice(confirmedOrder.total)}</span>
                   </div>
                 </div>
 

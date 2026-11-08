@@ -1,20 +1,20 @@
 import { Product, Order, Voucher, CartItem, OrderStatus, TrackingCheckpoint, DEFAULT_CATEGORIES, StoreConfig, DEFAULT_STORE_CONFIG } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_ORDERS, INITIAL_VOUCHERS } from '../data/mockData';
 
-const PRODUCTS_KEY = 'khan_gadget_products_v2';
-const DELETED_PRODUCT_IDS_KEY = 'khan_gadget_deleted_products_v2';
-const ORDERS_KEY = 'khan_gadget_orders_v2';
-const DELETED_ORDER_IDS_KEY = 'khan_gadget_deleted_orders_v2';
-const HISTORICAL_SALES_KEY = 'khan_gadget_historical_sales_v1';
-const VOUCHERS_KEY = 'khan_gadget_vouchers_v2';
-const CART_KEY = 'khan_gadget_cart_v2';
-const WISHLIST_KEY = 'khan_gadget_wishlist_v2';
-const RECENTLY_VIEWED_KEY = 'khan_gadget_recently_viewed_v1';
-const CATEGORIES_KEY = 'khan_gadget_categories_v2';
-const DELETED_CATEGORIES_KEY = 'khan_gadget_deleted_categories_v2';
-const STORE_CONFIG_KEY = 'khan_gadget_store_config_v2';
-const VISITOR_COUNT_KEY = 'khan_gadget_visitor_count_v1';
-const VISITOR_ID_KEY = 'khan_gadget_visitor_id_v1';
+const PRODUCTS_KEY = 'khan_fashion_products_v3';
+const DELETED_PRODUCT_IDS_KEY = 'khan_fashion_deleted_products_v3';
+const ORDERS_KEY = 'khan_fashion_orders_v3';
+const DELETED_ORDER_IDS_KEY = 'khan_fashion_deleted_orders_v3';
+const HISTORICAL_SALES_KEY = 'khan_fashion_historical_sales_v3';
+const VOUCHERS_KEY = 'khan_fashion_vouchers_v3';
+const CART_KEY = 'khan_fashion_cart_v3';
+const WISHLIST_KEY = 'khan_fashion_wishlist_v3';
+const RECENTLY_VIEWED_KEY = 'khan_fashion_recently_viewed_v3';
+const CATEGORIES_KEY = 'khan_fashion_categories_v3';
+const DELETED_CATEGORIES_KEY = 'khan_fashion_deleted_categories_v3';
+const STORE_CONFIG_KEY = 'khan_fashion_store_config_v3';
+const VISITOR_COUNT_KEY = 'khan_fashion_visitor_count_v3';
+const VISITOR_ID_KEY = 'khan_fashion_visitor_id_v3';
 
 export const BASE_VISITOR_COUNT = 8734;
 
@@ -92,7 +92,7 @@ export const generateWhatsAppOrderUrl = (
     message += `🎨 *ভেরিয়েন্ট:* ${variantStr}\n`;
   }
   
-  message += `\nআমি এই পণ্যটি ক্যাশ অন ডেলিভারিতে অর্ডার করতে চাই। দয়া করে বিস্তারিত জানিয়ে কনফার্ম করুন।`;
+  message += `\nআমি এই পণ্যটি ক্যাশ অন ডেলিভারিতে অর্ডার করতে চাই। দয়া করে বিস্তারিত জানিয়ে কনফার্ম করুন।`;
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 };
 
@@ -168,9 +168,7 @@ export const getStoredProducts = (): Product[] => {
     }
     const parsed: Product[] = JSON.parse(data);
     if (!Array.isArray(parsed)) return INITIAL_PRODUCTS.filter(p => !deletedIds.includes(p.id));
-    // Filter out any deleted products; DO NOT automatically re-inject deleted products
-    const filtered = parsed.filter(p => !deletedIds.includes(p.id));
-    return filtered;
+    return parsed.filter(p => !deletedIds.includes(p.id));
   } catch (e) {
     console.error('Failed to get stored products', e);
     const deletedIds = getDeletedProductIds();
@@ -290,7 +288,6 @@ export const deleteStoredOrder = (orderId: string): { orders: Order[]; preserved
     if (targetOrder && targetOrder.status === 'Delivered') {
       preservedAmount = targetOrder.total;
       wasDelivered = true;
-      // Permanently archive this delivered sales amount so total sales never drops!
       saveHistoricalDeliveredSales(targetOrder.total, 1);
     }
 
@@ -326,7 +323,6 @@ export const addStoredOrder = (newOrder: Order): void => {
   const updated = [newOrder, ...currentOrders];
   saveStoredOrders(updated);
 
-  // Decrement stock for ordered products
   const products = getStoredProducts();
   newOrder.items.forEach(item => {
     const target = products.find(p => p.id === item.product.id);
@@ -346,10 +342,8 @@ export const updateOrderStatus = (orderId: string, status: OrderStatus, carrier?
   order.status = status;
   if (carrier) order.carrierName = carrier;
 
-  // Add new tracking checkpoint automatically
   const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ', ' + new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
   
-  // Mark prior checkpoints completed
   const currentCheckpoints: TrackingCheckpoint[] = order.checkpoints.map(cp => ({
     ...cp,
     completed: true,
@@ -358,7 +352,7 @@ export const updateOrderStatus = (orderId: string, status: OrderStatus, carrier?
 
   const newCheckpoint: TrackingCheckpoint = {
     title: `Status Updated to ${status}`,
-    location: carrier ? `${carrier} Operations Hub` : 'KHAN GADGET Operations Center',
+    location: carrier ? `${carrier} Operations Hub` : 'KHAN FASHION Logistics Center',
     time: timeStr,
     description: note || `Order updated to ${status}. Details logged in dispatch system.`,
     completed: true,
@@ -397,7 +391,7 @@ export const getStoredCart = (): CartItem[] => {
   try {
     const data = localStorage.getItem(CART_KEY);
     return data ? JSON.parse(data) : [];
-  } catch (e) {
+  } catch {
     return [];
   }
 };
@@ -414,7 +408,7 @@ export const getStoredWishlist = (): string[] => {
   try {
     const data = localStorage.getItem(WISHLIST_KEY);
     return data ? JSON.parse(data) : [];
-  } catch (e) {
+  } catch {
     return [];
   }
 };
@@ -431,7 +425,6 @@ export const formatPrice = (amount: number): string => {
   return '৳ ' + (amount || 0).toLocaleString('en-BD');
 };
 
-// Categories Persistence & Deletion Tracking
 export const getDeletedCategoryNames = (): string[] => {
   try {
     const data = localStorage.getItem(DELETED_CATEGORIES_KEY);
@@ -474,7 +467,6 @@ export const getStoredCategories = (): string[] => {
     if (data) {
       const parsed = JSON.parse(data);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Merge any new default categories
         const combined = Array.from(new Set([...DEFAULT_CATEGORIES, ...parsed]));
         return combined.filter(c => typeof c === 'string' && !deleted.some(d => d.toLowerCase() === c.trim().toLowerCase()));
       }
@@ -537,7 +529,6 @@ export const renameStoredCategory = (oldName: string, newName: string): string[]
   return updated;
 };
 
-// Store Controls & Configuration Persistence
 export const getStoredStoreConfig = (): StoreConfig => {
   try {
     const data = localStorage.getItem(STORE_CONFIG_KEY);
@@ -567,7 +558,6 @@ export const saveStoredStoreConfig = (config: Partial<StoreConfig>): StoreConfig
   }
 };
 
-// Website Visitors Persistence
 export const getStoredVisitorCount = (): number => {
   try {
     const val = localStorage.getItem(VISITOR_COUNT_KEY);
@@ -609,6 +599,6 @@ export const resetToDemoDefaults = () => {
   localStorage.setItem(VOUCHERS_KEY, JSON.stringify(INITIAL_VOUCHERS));
   localStorage.removeItem(CART_KEY);
   localStorage.removeItem(WISHLIST_KEY);
-  localStorage.removeItem(CATEGORIES_KEY);
+  localStorage.setItem(CATEGORIES_KEY, JSON.stringify(DEFAULT_CATEGORIES));
   window.location.reload();
 };

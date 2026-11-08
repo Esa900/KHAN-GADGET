@@ -35,6 +35,7 @@ import {
 import { 
   TrustBadges 
 } from './components/TrustBadges';
+import heroBannerImage from './assets/images/hero_fashion_gadget_1794121072821.jpg';
 import { 
   Product, ProductCategory, DEFAULT_CATEGORIES, CartItem, Voucher, Order, OrderStatus, ProductReview, AnalyticsData,
   StoreConfig, DEFAULT_STORE_CONFIG
@@ -101,11 +102,11 @@ export default function App() {
   useEffect(() => {
     const pageTitle = storeConfig?.seoTitle?.trim() 
       ? storeConfig.seoTitle.trim() 
-      : `${storeConfig?.storeName || 'KHAN GADGET MALL'} | Bangladesh's Mobile Accessories Mall`;
+      : `${storeConfig?.storeName || 'KHAN FASHION'} | Premium Clothing & Smart Gadgets Bangladesh`;
     
     const pageDescription = storeConfig?.seoDescription?.trim()
       ? storeConfig.seoDescription.trim()
-      : "সকল প্রিমিয়াম গ্যাজেট ও এক্সেসরিজ · প্রিমিয়াম গ্রাহক ক্লাব · লাইভ কুরিয়ার ট্র্যাকিং.";
+      : "প্রিমিয়াম পাঞ্জাবি, পোলো শার্ট, অভিজাত পোশাক ও আধুনিক স্মার্ট গ্যাজেট মল · ক্যাশ অন ডেলিভারি · লাইভ কুরিয়ার ট্র্যাকিং.";
 
     // 1. Browser Tab / Page Title
     document.title = pageTitle;
@@ -164,7 +165,7 @@ export default function App() {
     const schemaData = {
       "@context": "https://schema.org",
       "@type": "OnlineStore",
-      "name": storeConfig?.storeName || 'KHAN GADGET MALL',
+      "name": storeConfig?.storeName || 'KHAN FASHION',
       "headline": pageTitle,
       "description": pageDescription,
       "telephone": storeConfig?.phone || '01854774406',
@@ -172,6 +173,34 @@ export default function App() {
     };
     schemaScript.textContent = JSON.stringify(schemaData);
   }, [storeConfig?.storeName, storeConfig?.seoTitle, storeConfig?.seoDescription, storeConfig?.phone]);
+
+  // URL-Only Admin Panel Routing: Accessible strictly by typing domain/admin or domain/#admin
+  useEffect(() => {
+    const handleAdminRoute = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      if (path === '/admin' || path.startsWith('/admin/') || hash === '#admin' || hash.startsWith('#admin/')) {
+        setIsAdminOpen(true);
+      }
+    };
+    handleAdminRoute();
+
+    window.addEventListener('popstate', handleAdminRoute);
+    window.addEventListener('hashchange', handleAdminRoute);
+    return () => {
+      window.removeEventListener('popstate', handleAdminRoute);
+      window.removeEventListener('hashchange', handleAdminRoute);
+    };
+  }, []);
+
+  const handleCloseAdmin = () => {
+    setIsAdminOpen(false);
+    const path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    if (path === '/admin' || path.startsWith('/admin/') || hash === '#admin' || hash.startsWith('#admin/')) {
+      window.history.pushState(null, '', '/');
+    }
+  };
 
   // Modals visibility
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -817,8 +846,8 @@ export default function App() {
       
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-2.5 rounded shadow-2xl flex items-center gap-2 text-xs font-semibold animate-in slide-in-from-bottom-5 fade-in duration-200 border border-slate-700">
-          <Check className="w-4 h-4 text-emerald-400" />
+        <div className="fixed bottom-5 right-5 z-50 bg-[#0c1017] text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 text-xs font-semibold animate-in slide-in-from-bottom-5 fade-in duration-200 border border-amber-500/30">
+          <Check className="w-4 h-4 text-amber-400" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -842,10 +871,7 @@ export default function App() {
           setActiveTrackingOrderId(undefined);
           setIsTrackingOpen(true);
         }}
-        onOpenAdmin={() => setIsAdminOpen(true)}
         onOpenWishlist={() => setIsWishlistOpen(true)}
-        onRefreshCloud={handleManualCloudSync}
-        isSyncing={isSyncing}
         isDarkMode={isDarkMode}
         onToggleDarkMode={toggleDarkMode}
       />
@@ -853,7 +879,7 @@ export default function App() {
       {/* High-Density Layout Container */}
       <main className="w-full max-w-[1440px] mx-auto p-3 sm:p-4 flex gap-4 flex-1">
         
-        {/* Left Column: Categories, Filters, and Admin Shortcut */}
+        {/* Left Column: Categories and Filters */}
         <aside className="w-52 shrink-0 hidden lg:flex flex-col gap-3">
           {/* Categories Card */}
           <div className="bg-white dark:bg-slate-900 p-3.5 shadow-xs rounded-xl border border-slate-200/80 dark:border-slate-800">
@@ -872,12 +898,12 @@ export default function App() {
                     }}
                     className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition ${
                       isSelected
-                        ? 'text-emerald-800 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60 dark:border-emerald-800/60'
+                        ? 'text-amber-600 dark:text-amber-400 font-bold bg-amber-500/10 border border-amber-500/30'
                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                     }`}
                   >
-                    {isSelected && <div className="w-1.5 h-3.5 bg-emerald-700 rounded-full" />}
-                    <span className="truncate">{cat === 'All' ? 'সব পণ্য' : cat}</span>
+                    {isSelected && <div className="w-1.5 h-3.5 bg-amber-500 rounded-full" />}
+                    <span className="truncate">{cat === 'All' ? 'সব পণ্য ও কালেকশন' : cat}</span>
                   </li>
                 );
               })}
@@ -895,7 +921,7 @@ export default function App() {
                 <select
                   value={selectedBrand}
                   onChange={(e) => setSelectedBrand(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-1.5 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:border-emerald-600"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-1.5 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:border-amber-500"
                 >
                   {brands.map(b => (
                     <option key={b} value={b}>{b === 'All' ? 'সব ব্র্যান্ড' : b}</option>
@@ -909,7 +935,7 @@ export default function App() {
                     type="checkbox"
                     checked={onlyDarazMall}
                     onChange={(e) => setOnlyDarazMall(e.target.checked)}
-                    className="accent-emerald-700 rounded"
+                    className="accent-amber-500 rounded"
                   />
                   <span className="text-slate-700 dark:text-slate-300 font-medium">অরিজিনাল মল পণ্য</span>
                 </label>
@@ -918,7 +944,7 @@ export default function App() {
                     type="checkbox"
                     checked={onlyFreeDelivery}
                     onChange={(e) => setOnlyFreeDelivery(e.target.checked)}
-                    className="accent-emerald-700 rounded"
+                    className="accent-amber-500 rounded"
                   />
                   <span className="text-slate-700 dark:text-slate-300 font-medium">ফ্রি ডেলিভারি</span>
                 </label>
@@ -927,7 +953,7 @@ export default function App() {
                     type="checkbox"
                     checked={onlyFlashSale}
                     onChange={(e) => setOnlyFlashSale(e.target.checked)}
-                    className="accent-emerald-700 rounded"
+                    className="accent-amber-500 rounded"
                   />
                   <span className="text-slate-700 dark:text-slate-300 font-medium">হট অফার / ফ্ল্যাশ সেল</span>
                 </label>
@@ -941,7 +967,7 @@ export default function App() {
                     setOnlyFreeDelivery(false);
                     setOnlyFlashSale(false);
                   }}
-                  className="w-full mt-2 py-1.5 text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-slate-800 rounded-lg text-center transition cursor-pointer border border-emerald-200 dark:border-emerald-800"
+                  className="w-full mt-2 py-1.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 rounded-lg text-center transition cursor-pointer border border-amber-500/30"
                 >
                   ফিল্টার মুছুন
                 </button>
@@ -953,6 +979,70 @@ export default function App() {
         {/* Center Section: Banner, Header bar & Product Grid */}
         <section className="flex-1 flex flex-col gap-3 min-w-0">
           
+          {/* Editorial Hero Banner for KHAN FASHION */}
+          <div className="relative rounded-2xl overflow-hidden border border-amber-500/30 bg-[#0c1017] shadow-xl">
+            <div className="flex flex-col md:flex-row items-center">
+              {/* Left text column */}
+              <div className="p-6 sm:p-7 md:w-3/5 z-10 flex flex-col justify-center">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[11px] font-bold uppercase tracking-wider mb-2.5 w-max">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Luxury Fashion & Smart Gadgets</span>
+                </div>
+                
+                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
+                  KHAN FASHION
+                </h2>
+                <p className="text-sm sm:text-base text-amber-300/90 font-medium mt-0.5">
+                  অভিজাত পোশাক ও প্রিমিয়াম স্মার্ট প্রযুক্তির মেলবন্ধন
+                </p>
+                <p className="text-xs text-slate-300 mt-2 max-w-md leading-relaxed hidden sm:block">
+                  রাজকীয় পাঞ্জাবি, প্রিমিয়াম পোলো এবং বিশ্বমানের এএনসি ইয়ারবাডস ও স্মার্টওয়াচ — ১০০% আসল কোয়ালিটিতে ক্যাশ অন ডেলিভারি।
+                </p>
+
+                {/* Category Quick Filter Pills */}
+                <div className="flex flex-wrap gap-2 mt-4">
+                  <button
+                    onClick={() => {
+                      setSelectedCategory("Men's Clothing");
+                      setSearchQuery('');
+                    }}
+                    className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
+                  >
+                    <span>👔 পোশাক কালেকশন</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedCategory("Smart Gadgets");
+                      setSearchQuery('');
+                    }}
+                    className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 font-bold text-xs transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>⚡ স্মার্ট গ্যাজেটস</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedCategory("Audio & Sound");
+                      setSearchQuery('');
+                    }}
+                    className="px-3.5 py-1.5 rounded-lg bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-700 font-medium text-xs transition cursor-pointer hidden sm:flex items-center gap-1.5"
+                  >
+                    <span>🎧 অডিও & সাউন্ড</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Right image column */}
+              <div className="w-full md:w-2/5 h-44 sm:h-56 md:h-64 relative overflow-hidden">
+                <img
+                  src={heroBannerImage}
+                  alt="KHAN FASHION Hero Collection"
+                  className="w-full h-full object-cover object-center filter brightness-95 contrast-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[#0c1017] via-transparent to-transparent" />
+              </div>
+            </div>
+          </div>
+
           {/* Flash Sale Banner with Live Timer */}
           <FlashSaleBanner 
             onSelectVoucher={(code) => {
@@ -968,9 +1058,9 @@ export default function App() {
             <div className="flex items-center gap-2">
               <h1 className="font-bold text-slate-900 dark:text-white">
                 {searchQuery ? (
-                  <span>অনুসন্ধান ফলাফল &ldquo;<span className="text-emerald-800 dark:text-emerald-400">{searchQuery}</span>&rdquo;</span>
+                  <span>অনুসন্ধান ফলাফল &ldquo;<span className="text-amber-600 dark:text-amber-400">{searchQuery}</span>&rdquo;</span>
                 ) : selectedCategory === 'All' ? (
-                  <span>সকল প্রিমিয়াম গ্যাজেট ও এক্সেসরিজ</span>
+                  <span>সকল প্রিমিয়াম পোশাক ও স্মার্ট গ্যাজেটস</span>
                 ) : (
                   <span>{selectedCategory}</span>
                 )}
@@ -986,7 +1076,7 @@ export default function App() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:border-emerald-600"
+                  className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:border-amber-500"
                 >
                   <option value="featured">জনপ্রিয় (Featured)</option>
                   <option value="price-asc">দাম: কম থেকে বেশি</option>
@@ -1014,7 +1104,7 @@ export default function App() {
                   setOnlyFlashSale(false);
                   setSearchQuery('');
                 }}
-                className="mt-3 px-4 py-2 rounded-xl bg-emerald-800 text-white text-xs font-bold hover:bg-emerald-900 transition cursor-pointer"
+                className="mt-3 px-4 py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold hover:bg-amber-400 transition cursor-pointer"
               >
                 সব ফিল্টার মুছুন
               </button>
@@ -1025,18 +1115,18 @@ export default function App() {
                 <React.Fragment key={product.id}>
                   {/* High Density Promotion Card */}
                   {idx === 2 && (
-                    <div className="col-span-2 bg-gradient-to-br from-[#063b1d] to-[#0b542a] rounded-xl p-4 text-white flex flex-col justify-center shadow-xs border border-emerald-700/40">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">স্পেশাল মেগা অফার</span>
-                      <h3 className="text-base sm:text-lg font-black mt-1">প্রিমিয়াম গ্রাহক ক্লাব</h3>
-                      <p className="text-xs text-emerald-100/90 mt-0.5 leading-relaxed">
-                        কুপন কোড ব্যবহার করে অতিরিক্ত ছাড় ও সারাদেশে দ্রুত হোম ডেলিভারি নিশ্চিত করুন।
+                    <div className="col-span-2 bg-gradient-to-br from-[#0c1017] via-[#151c29] to-[#1e283c] rounded-xl p-4 text-white flex flex-col justify-center shadow-xs border border-amber-500/30">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">স্পেশাল মেগা অফার</span>
+                      <h3 className="text-base sm:text-lg font-black mt-1">KHAN FASHION ক্লাব</h3>
+                      <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
+                        কুপন কোড FASHION10 ব্যবহার করে অতিরিক্ত ছাড় ও সারাদেশে দ্রুত ক্যাশ অন হোম ডেলিভারি নিশ্চিত করুন।
                       </p>
                       <button 
                         onClick={() => {
-                          handleApplyVoucher('KHAN10');
-                          showToast('১০% স্পেশাল ভাউচার যোগ হয়েছে!');
+                          handleApplyVoucher('FASHION10');
+                          showToast('১০% স্পেশাল ভাউচার FASHION10 যোগ হয়েছে!');
                         }}
-                        className="mt-3 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black py-1.5 px-3.5 rounded-lg w-max transition cursor-pointer shadow-sm"
+                        className="mt-3 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black py-1.5 px-3.5 rounded-lg w-max transition cursor-pointer shadow-sm"
                       >
                         ১০% ছাড় কুপন নিন
                       </button>
@@ -1073,7 +1163,7 @@ export default function App() {
           <div className="bg-white dark:bg-slate-900 p-3.5 shadow-xs rounded-xl border border-slate-200/80 dark:border-slate-800">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">লাইভ কুরিয়ার ট্র্যাকিং</h3>
-              <span className="text-[10px] text-emerald-800 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded">সরাসরি ট্র্যাক</span>
+              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded">সরাসরি ট্র্যাক</span>
             </div>
             
             <div className="flex gap-1.5 mb-3">
@@ -1082,7 +1172,7 @@ export default function App() {
                 placeholder="অর্ডার আইডি / ফোন নং" 
                 value={quickTrackInput}
                 onChange={(e) => setQuickTrackInput(e.target.value)}
-                className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-600"
+                className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-amber-500"
               />
               <button 
                 onClick={() => {
@@ -1091,23 +1181,23 @@ export default function App() {
                   }
                   setIsTrackingOpen(true);
                 }}
-                className="bg-emerald-800 hover:bg-emerald-900 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg cursor-pointer transition"
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 text-[11px] font-bold px-3 py-1.5 rounded-lg cursor-pointer transition"
               >
                 খুঁজুন
               </button>
             </div>
 
             {/* Quick status timeline */}
-            <div className="space-y-3 border-l-2 border-emerald-200 dark:border-emerald-800 pl-3.5 ml-1.5 text-xs my-3">
+            <div className="space-y-3 border-l-2 border-amber-500/40 pl-3.5 ml-1.5 text-xs my-3">
               <div className="relative">
-                <div className="absolute -left-[18px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-600 ring-4 ring-emerald-100 dark:ring-emerald-950" />
+                <div className="absolute -left-[18px] top-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-amber-500/20" />
                 <div className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">অর্ডার কনফার্মড</div>
                 <div className="text-[10px] text-slate-400">পণ্য প্যাকেজিং সম্পন্ন</div>
               </div>
               <div className="relative">
-                <div className="absolute -left-[18px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-700 ring-4 ring-emerald-100 dark:ring-emerald-950" />
+                <div className="absolute -left-[18px] top-1 w-2.5 h-2.5 rounded-full bg-amber-600 ring-4 ring-amber-500/20" />
                 <div className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">কুরিয়ারে হস্তান্তর</div>
-                <div className="text-[10px] text-slate-400">Steadfast / RedX কুরিয়ারে রওয়ানা</div>
+                <div className="text-[10px] text-slate-400">Steadfast / Pathao কুরিয়ারে রওয়ানা</div>
               </div>
               <div className="relative">
                 <div className="absolute -left-[18px] top-1 w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-700 ring-4 ring-white dark:ring-slate-900" />
@@ -1121,7 +1211,7 @@ export default function App() {
                 setActiveTrackingOrderId(quickTrackInput.trim() || undefined);
                 setIsTrackingOpen(true);
               }}
-              className="w-full mt-2 py-2 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-lg transition cursor-pointer border border-emerald-200 dark:border-emerald-800 text-center"
+              className="w-full mt-2 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold rounded-lg transition cursor-pointer border border-amber-500/30 text-center"
             >
               সম্পূর্ণ ট্র্যাকিং পেজ খুলুন
             </button>
@@ -1131,16 +1221,16 @@ export default function App() {
           <div className="bg-white dark:bg-slate-900 p-3.5 shadow-xs rounded-xl border border-slate-200/80 dark:border-slate-800 flex-1 flex flex-col justify-between text-xs">
             <div>
               <div className="flex items-center gap-1.5 mb-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                <ShieldCheck className="w-4 h-4 text-amber-500" />
                 <h3 className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">নিরাপদ কেনাকাটা</h3>
               </div>
               <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed mb-3">
-                পণ্য হাতে পেয়ে চেক করে সম্পূর্ণ মূল্য পরিশোধ করুন। কোনো অগ্রিম পেমেন্টের ঝুঁকি নেই।
+                পণ্য হাতে পেয়ে কোয়ালিটি ও সাইজ চেক করে মূল্য পরিশোধ করুন। কোনো অগ্রিম পেমেন্টের ঝুঁকি নেই।
               </p>
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700/60">
                   <span className="font-medium text-slate-700 dark:text-slate-200 text-[11px]">ক্যাশ অন ডেলিভারি (COD)</span>
-                  <span className="text-[9px] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold px-1.5 py-0.5 rounded">ভেরিফাইড</span>
+                  <span className="text-[9px] bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-bold px-1.5 py-0.5 rounded">ভেরিফাইড</span>
                 </div>
                 <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700/60">
                   <span className="font-medium text-slate-700 dark:text-slate-200 text-[11px]">বিকাশ / নগদ / রকেট</span>
@@ -1154,8 +1244,8 @@ export default function App() {
             </div>
 
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
-              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">© {new Date().getFullYear()} {storeConfig.storeName || 'KHAN GADGET MALL'}</div>
-              <div className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">ঘরের বাজার স্টাইলে ফ্রেশ ও অথেনটিক</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">© {new Date().getFullYear()} {storeConfig.storeName || 'KHAN FASHION'}</div>
+              <div className="text-[10px] text-amber-500 dark:text-amber-400 font-medium">অভিজাত লাইফস্টাইল ও প্রিমিয়াম গ্যাজেটস</div>
             </div>
           </div>
         </aside>
@@ -1169,7 +1259,6 @@ export default function App() {
           setActiveTrackingOrderId(undefined);
           setIsTrackingOpen(true);
         }}
-        onOpenAdmin={() => setIsAdminOpen(true)}
       />
 
       {/* MODAL: Product Detail */}
@@ -1237,7 +1326,7 @@ export default function App() {
       {/* MODAL: Admin Panel */}
       <AdminPanel
         isOpen={isAdminOpen}
-        onClose={() => setIsAdminOpen(false)}
+        onClose={handleCloseAdmin}
         products={products}
         orders={orders}
         vouchers={vouchers}
@@ -1262,46 +1351,46 @@ export default function App() {
       {/* MODAL / DRAWER: Wishlist */}
       {isWishlistOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex justify-end">
-          <div className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between p-5 animate-in slide-in-from-right duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-[#0c1017] h-full shadow-2xl flex flex-col justify-between p-5 animate-in slide-in-from-right duration-200 border-l border-slate-200 dark:border-slate-800">
             <div>
-              <div className="flex items-center justify-between pb-3 border-b border-gray-200 mb-4">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-slate-800 mb-4">
                 <div className="flex items-center gap-2">
                   <Heart className="w-5 h-5 text-rose-500 fill-rose-500" />
-                  <h3 className="font-bold text-gray-900 text-base">Saved Wishlist ({wishlist.length})</h3>
+                  <h3 className="font-bold text-gray-900 dark:text-white text-base">Saved Wishlist ({wishlist.length})</h3>
                 </div>
-                <button onClick={() => setIsWishlistOpen(false)}>
-                  <X className="w-5 h-5 text-gray-400 hover:text-gray-700" />
+                <button onClick={() => setIsWishlistOpen(false)} className="text-gray-400 hover:text-gray-700 dark:hover:text-white cursor-pointer">
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
               {wishlist.length === 0 ? (
                 <div className="text-center py-16 text-gray-400">
-                  <Heart className="w-12 h-12 text-gray-200 mx-auto mb-2" />
-                  <p className="font-semibold text-gray-700 text-xs">No saved items yet.</p>
+                  <Heart className="w-12 h-12 text-gray-300 dark:text-slate-700 mx-auto mb-2" />
+                  <p className="font-semibold text-gray-700 dark:text-slate-300 text-xs">No saved items yet.</p>
                   <p className="text-[11px] text-gray-400 mt-1">
-                    Click the heart icon on any charger or accessory to save it!
+                    Click the heart icon on any product or fashion item to save it!
                   </p>
                 </div>
               ) : (
                 <div className="space-y-3 overflow-y-auto max-h-[75vh]">
                   {products.filter(p => wishlist.includes(p.id)).map(prod => (
-                    <div key={prod.id} className="flex gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    <div key={prod.id} className="flex gap-3 p-3 bg-gray-50 dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800">
                       <img
                         src={prod.image}
                         alt={prod.title}
                         referrerPolicy="no-referrer"
-                        className="w-14 h-14 object-contain rounded bg-white p-1 border border-gray-100"
+                        className="w-14 h-14 object-cover rounded-lg bg-white p-0.5 border border-gray-100 dark:border-slate-800"
                       />
                       <div className="flex-1 min-w-0 flex flex-col justify-between text-xs">
-                        <div className="font-medium text-gray-900 truncate">{prod.title}</div>
-                        <div className="font-bold text-emerald-800">{formatPrice(prod.price)}</div>
+                        <div className="font-medium text-gray-900 dark:text-slate-100 truncate">{prod.title}</div>
+                        <div className="font-bold text-amber-600 dark:text-amber-400">{formatPrice(prod.price)}</div>
                         <div className="flex items-center gap-2 pt-1">
                           <button
                             onClick={() => {
                               handleAddToCart(prod, 1);
                               setIsWishlistOpen(false);
                             }}
-                            className="bg-emerald-700 text-white text-[11px] font-bold px-3 py-1 rounded-md hover:bg-emerald-800 cursor-pointer"
+                            className="bg-amber-500 text-slate-950 text-[11px] font-bold px-3 py-1 rounded-md hover:bg-amber-400 cursor-pointer transition"
                           >
                             কার্টে যোগ করুন
                           </button>
@@ -1321,7 +1410,7 @@ export default function App() {
 
             <button
               onClick={() => setIsWishlistOpen(false)}
-              className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl"
+              className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-800 dark:text-slate-200 text-xs font-bold rounded-xl cursor-pointer"
             >
               Close
             </button>
@@ -1333,18 +1422,19 @@ export default function App() {
       {(() => {
         const rawDigits = (storeConfig.phone || '01854774406').replace(/[^0-9]/g, '');
         const targetPhone = rawDigits.startsWith('88') ? rawDigits : '88' + rawDigits;
-        const chatUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(`Hello ${storeConfig.storeName || 'KHAN GADGET MALL'}, I have an inquiry.`)}`;
+        const chatUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(`Hello ${storeConfig.storeName || 'KHAN FASHION'}, I have an inquiry.`)}`;
         return (
           <a
             href={chatUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="fixed bottom-5 right-5 z-40 bg-[#25D366] hover:bg-[#20ba59] text-white px-3.5 py-2.5 rounded-full shadow-2xl flex items-center gap-2 transition hover:scale-105 cursor-pointer border border-white/20"
+            className="fixed bottom-5 right-5 z-40 bg-[#0c1017] hover:bg-[#141b27] text-white px-3.5 py-2.5 rounded-full shadow-2xl flex items-center gap-2 transition hover:scale-105 cursor-pointer border border-amber-500/30"
             title={`WhatsApp Support: ${storeConfig.phone}`}
           >
-            <MessageCircle className="w-5 h-5 fill-white" />
-            <span className="text-xs font-bold hidden sm:inline">WhatsApp</span>
-            <span className="text-[11px] font-mono hidden md:inline">{storeConfig.phone}</span>
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+            <MessageCircle className="w-4 h-4 text-amber-400" />
+            <span className="text-xs font-bold text-amber-300 hidden sm:inline">WhatsApp</span>
+            <span className="text-[11px] font-mono text-slate-300 hidden md:inline">{storeConfig.phone}</span>
           </a>
         );
       })()}

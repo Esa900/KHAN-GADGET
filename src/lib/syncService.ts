@@ -539,7 +539,7 @@ export const syncUpdateOrderStatus = async (
       ...targetOrder.checkpoints.map(cp => ({ ...cp, completed: true, current: false })),
       {
         title: `Status Updated to ${status}`,
-        location: carrier ? `${carrier} Operations Hub` : 'KHAN GADGET Operations Center',
+        location: carrier ? `${carrier} Operations Hub` : 'KHAN FASHION Operations Center',
         time: timeStr,
         description: note || `Order updated to ${status}. Details logged in dispatch system.`,
         completed: true,
